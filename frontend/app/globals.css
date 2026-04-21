@@ -2,8 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-black text-white;
+:root {
+  /* Default Branding */
+  --cyberBlue: #00f3ff;
+  --matrixGreen: #00ff41;
+}
+
+[data-theme='professional'] {
+  --bg-color: #f8fafc;
+  --card-bg: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --accent-color: #2563eb;
+  --border-color: #e2e8f0;
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --glow-opacity: 0;
+}
+
+[data-theme='ironman'] {
+  --bg-color: #020617;
+  --card-bg: rgba(15, 23, 42, 0.4);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent-color: #ef4444; /* Stark Red */
+  --gold-accent: #f59e0b; /* Arc Reactor Gold */
+  --border-color: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(15, 23, 42, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glow-opacity: 0.8;
+}
+
+body {
+  background: var(--bg-color);
+  color: var(--text-primary);
+  transition: all 0.5s ease;
+}
+
+.glass-panel {
+  background: var(--card-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.iron-glow {
+  box-shadow: 0 0 25px rgba(239, 68, 68, var(--glow-opacity));
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
   }
 }

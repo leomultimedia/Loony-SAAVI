@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OmniCommandBar } from '../../../components/omni/OmniCommandBar';
 
-// Types for background processes
 interface BackgroundTask {
     id: string;
     name: string;
@@ -17,9 +16,9 @@ export default function CommandDashboard() {
   const [tenants, setTenants] = useState<any[]>([]);
   const [currentEntity, setCurrentEntity] = useState<any>(null);
   const [tasks, setTasks] = useState<BackgroundTask[]>([
-      { id: 'task_01', name: 'Llama-3 Analysis: Lead #992', progress: 65, status: 'Running', type: 'AI_SIM' },
+      { id: 'task_01', name: 'Stark Analysis: Lead #992', progress: 65, status: 'Running', type: 'AI_SIM' },
       { id: 'task_02', name: 'Global DNS Shadow Audit', progress: 40, status: 'Running', type: 'SHADOW_AUDIT' },
-      { id: 'task_03', name: 'HubSpot Pipeline Handshake', progress: 100, status: 'Complete', type: 'CRM_SYNC' },
+      { id: 'task_03', name: 'CRM Pipeline Handshake', progress: 100, status: 'Complete', type: 'CRM_SYNC' },
   ]);
 
   useEffect(() => {
@@ -27,7 +26,6 @@ export default function CommandDashboard() {
     setTenants(stored);
     setCurrentEntity(stored[0] || { name: 'Lear Cyber tech', email: 'admin@lct.com', tier: 'PRO', status: 'Active' });
 
-    // Simulate background process movement
     const interval = setInterval(() => {
         setTasks(prev => prev.map(t => ({
             ...t,
@@ -37,10 +35,6 @@ export default function CommandDashboard() {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
-
-  const subEntities = currentEntity?.isMaster 
-    ? tenants.filter(t => t.parentId === currentEntity.id)
-    : [];
 
   const exportDataExcel = () => {
       if (!currentEntity) return;
@@ -58,91 +52,99 @@ export default function CommandDashboard() {
   };
 
   return (
-    <main className="min-h-screen bg-[#050505] text-gray-100 font-sans p-6 overflow-hidden flex flex-col relative selection:bg-cyberBlue selection:text-black">
+    <main className="min-h-screen bg-transparent p-6 overflow-hidden flex flex-col relative selection:bg-red-500 selection:text-white transition-colors duration-1000">
        
-       {/* Cinematic Background Mesh */}
-       <div className="fixed inset-0 z-0 opacity-20 pointer-events-none">
-           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#00f3ff10_0%,transparent_50%)]"></div>
-           <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_80%_80%,#a855f710_0%,transparent_40%)]"></div>
+       {/* Cinematic Theme-Sensitive Overlays */}
+       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+           {/* Ironman Energy Rings */}
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-red-500/10 rounded-full animate-[spin_60s_linear_infinite] [mask-image:linear-gradient(to_bottom,transparent,black)]"></div>
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] border border-gold-500/5 border-dashed rounded-full animate-[spin_90s_linear_infinite_reverse]"></div>
+           
+           {/* Background Glows */}
+           <div className="absolute top-0 right-0 w-[40%] h-[40%] bg-[radial-gradient(circle_at_center,var(--accent-color)_0%,transparent_70%)] opacity-[0.08]"></div>
+           <div className="absolute bottom-0 left-0 w-[50%] h-[50%] bg-[radial-gradient(circle_at_center,#00f3ff10_0%,transparent_60%)] opacity-[0.05]"></div>
        </div>
 
        <OmniCommandBar />
 
-       {/* Top Navigation Bar */}
-       <nav className="flex justify-between items-center w-full max-w-7xl mx-auto mb-8 relative z-20">
-           <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2 group cursor-pointer" onClick={() => window.location.href='/admin'}>
-                    <div className="w-8 h-8 rounded-lg bg-matrixGreen/20 border border-matrixGreen/40 flex items-center justify-center text-matrixGreen group-hover:bg-matrixGreen group-hover:text-black transition">
-                        <span className="text-xs font-bold">A</span>
+       {/* Navigation */}
+       <nav className="flex justify-between items-center w-full max-w-7xl mx-auto mb-10 relative z-20">
+           <div className="flex items-center gap-8">
+                <div onClick={() => window.location.href='/admin'} className="group cursor-pointer flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl glass-panel iron-glow flex items-center justify-center border-t-red-500/50">
+                        <span className="text-white font-black text-xs">V</span>
                     </div>
-                    <span className="text-xs font-mono font-bold tracking-widest text-gray-400 group-hover:text-white">TO_ADMIN</span>
-                </div>
-                <div className="h-4 w-[1px] bg-white/10"></div>
-                <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-600 font-mono uppercase tracking-[0.3em]">Sovereign Node Context</span>
-                    <span className="text-sm font-bold text-cyberBlue">{currentEntity?.name}</span>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-mono tracking-[0.4em] text-gray-500 hidden md:block">COMMAND_NODE</span>
+                        <span className="text-xs font-bold uppercase hover:text-white transition">Admin Portal</span>
+                    </div>
                 </div>
            </div>
 
-           <div className="flex items-center gap-4">
-               <button onClick={exportDataExcel} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase">
-                  <span className="text-cyberBlue">↓</span> EXPORT_VAULT
-               </button>
-               <div className="flex items-center gap-3 px-4 py-2 bg-matrixGreen/10 border border-matrixGreen/40 rounded-xl">
-                    <div className="w-2 h-2 bg-matrixGreen rounded-full animate-pulse shadow-[0_0_10px_#00ff41]"></div>
-                    <span className="text-[10px] font-bold text-matrixGreen tracking-widest uppercase">Nodes_Live: 24/24</span>
-               </div>
+           <div className="flex items-center gap-6">
+                <div className="hidden lg:flex flex-col items-end mr-4">
+                    <span className="text-[9px] font-mono text-gray-500 uppercase tracking-widest">Active Sovereign Link</span>
+                    <span className="text-sm font-bold text-white tracking-tight">{currentEntity?.name}</span>
+                </div>
+                <button onClick={exportDataExcel} className="px-6 py-2.5 glass-panel iron-glow rounded-xl hover:bg-white/5 text-[10px] font-black tracking-[0.2em] uppercase transition">
+                    Export Data
+                </button>
            </div>
        </nav>
 
-       <div className="flex-1 max-w-7xl w-full mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 relative z-10">
+       <div className="flex-1 max-w-7xl w-full mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10">
           
-          {/* Main Sales Engine Queue */}
-          <div className="md:col-span-8 space-y-6">
+          {/* Main Display: Extreme Glassmorphism */}
+          <div className="md:col-span-8">
               <motion.div 
-                initial={{ opacity: 0, y: 20 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-10 backdrop-blur-3xl relative overflow-hidden group shadow-2xl"
+                initial={{ opacity: 0, scale: 0.98 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                className="glass-panel iron-glow rounded-[3rem] p-12 relative overflow-hidden group border-white/5"
               >
-                 <div className="absolute -top-24 -right-24 w-64 h-64 bg-cyberBlue/10 blur-[80px] rounded-full pointer-events-none group-hover:bg-cyberBlue/20 transition duration-1000"></div>
+                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500/40 to-transparent"></div>
                  
-                 <header className="flex justify-between items-center mb-10">
+                 <header className="flex justify-between items-start mb-12">
                     <div>
-                        <h2 className="text-3xl font-display font-bold text-white tracking-tight">AI Qualification Queue</h2>
-                        <p className="text-xs text-gray-500 font-mono mt-2 uppercase tracking-widest">Processing Leads via Llama-3-70B Matrix</p>
+                        <h2 className="text-4xl font-display font-black text-white tracking-tighter uppercase leading-none mb-4">
+                            Sovereign HUD <span className="text-red-500">v4.0</span>
+                        </h2>
+                        <div className="flex gap-4">
+                            <span className="flex items-center gap-2 text-[9px] font-mono text-gray-500">
+                                <div className="w-1 h-1 bg-red-500 rounded-full shadow-[0_0_8px_red]"></div> ARC_CORE: READY
+                            </span>
+                            <span className="flex items-center gap-2 text-[9px] font-mono text-gray-500">
+                                <div className="w-1 h-1 bg-cyberBlue rounded-full shadow-[0_0_8px_#00f3ff]"></div> FRIDAY_LINK: ACTIVE
+                            </span>
+                        </div>
                     </div>
-                    <div className="flex gap-2">
-                        <span className="px-3 py-1 bg-cyberBlue/20 text-cyberBlue rounded-full text-[10px] font-bold border border-cyberBlue/30">BYOK_LAYER_ACTIVE</span>
+                    <div className="bg-red-500/10 border border-red-500/30 px-4 py-2 rounded-lg">
+                        <span className="text-[10px] font-black text-red-500 uppercase tracking-[0.1em]">Security Protocol 14-B</span>
                     </div>
                  </header>
 
-                 <div className="space-y-4">
-                    {[1, 2, 3, 4].map((i) => (
+                 <div className="grid grid-cols-1 gap-4">
+                    {[1, 2, 3].map((i) => (
                        <motion.div 
                           key={i} 
-                          whileHover={{ x: 10, backgroundColor: 'rgba(255,255,255,0.06)' }}
-                          className="flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/5 transition-all cursor-pointer group/item"
+                          whileHover={{ x: 15, backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+                          className="flex items-center justify-between p-6 rounded-3xl border border-white/5 bg-white/[0.01] transition-all cursor-pointer group/item relative"
                        >
-                          <div className="flex items-center gap-5">
-                            <div className="w-12 h-12 rounded-2xl bg-[#0a0a0a] border border-white/10 flex items-center justify-center relative overflow-hidden">
-                                <div className="absolute inset-0 bg-gradient-to-br from-cyberBlue/20 to-purple-500/20 opacity-0 group-hover/item:opacity-100 transition"></div>
-                                <span className="font-bold text-cyberBlue z-10">{i}</span>
+                          <div className="flex items-center gap-6">
+                            <div className="w-14 h-14 rounded-2xl glass-panel flex items-center justify-center relative overflow-hidden group-hover/item:border-red-500/50 transition">
+                                <div className="absolute inset-0 bg-red-500/10 animate-pulse"></div>
+                                <span className="font-mono text-white z-10 text-xl">#0{i}</span>
                             </div>
                             <div>
-                              <p className="font-bold text-white group-hover/item:text-cyberBlue transition">Prospect Entity #{9923 + i}</p>
-                              <div className="flex gap-4 mt-1">
-                                 <span className="text-[10px] text-gray-500 flex items-center gap-1">
-                                    <span className="w-1 h-1 bg-matrixGreen rounded-full"></span> SSL_CERT_VALID
-                                 </span>
-                                 <span className="text-[10px] text-gray-500 flex items-center gap-1">
-                                    <span className="w-1 h-1 bg-red-500 rounded-full"></span> DNS_DMARC_GAP
-                                 </span>
+                              <p className="font-black text-gray-400 group-hover/item:text-white transition tracking-tight text-lg">PROSPECT_MARK_{100 + i}</p>
+                              <div className="flex gap-4 mt-1 opacity-50">
+                                 <span className="text-[10px] font-mono uppercase">SSL_ENCRYPTED</span>
+                                 <span className="text-[10px] font-mono uppercase text-red-500">DMARC_FAILURE</span>
                               </div>
                             </div>
                           </div>
                           <div className="text-right">
-                             <div className="text-2xl font-bold font-display text-white group-hover/item:text-matrixGreen transition tracking-tighter">8{i}%</div>
-                             <p className="text-[9px] font-mono text-gray-600 uppercase">Match Score</p>
+                             <div className="text-3xl font-black text-white group-hover/item:text-red-500 transition tracking-tighter">9{i}%</div>
+                             <p className="text-[9px] font-mono text-gray-600 uppercase tracking-widest">Match Score</p>
                           </div>
                        </motion.div>
                     ))}
@@ -150,44 +152,38 @@ export default function CommandDashboard() {
               </motion.div>
           </div>
 
-          {/* Right Statistics & Background Task Hub */}
-          <div className="md:col-span-4 space-y-6">
+          {/* Right Panels: Extreme Glass */}
+          <div className="md:col-span-4 space-y-8">
              
-             {/* Dynamic Pipeline Velocity */}
+             {/* Iron Revenue Card */}
              <motion.div 
-                initial={{ opacity: 0, x: 20 }} 
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-matrixGreen text-black p-8 rounded-[2.5rem] shadow-[0_0_50px_rgba(0,255,65,0.15)] relative overflow-hidden group"
+                whileHover={{ scale: 1.02 }}
+                className="glass-panel iron-glow rounded-[2.5rem] p-10 relative overflow-hidden border-t-red-500/50"
              >
-                <div className="absolute top-0 right-0 p-8 opacity-20 rotate-12 group-hover:rotate-45 transition duration-1000">
-                    <span className="text-6xl font-black italic tracking-tighter hover:scale-110">REVENUE</span>
-                </div>
-                <h3 className="font-mono text-xs font-bold uppercase tracking-widest opacity-60">Pipeline_Velocity (MTD)</h3>
-                <p className="text-5xl font-black tracking-tighter my-4">$1.42M</p>
-                <div className="flex items-center gap-2">
-                    <span className="bg-black/10 px-2 py-0.5 rounded text-[10px] font-bold">↑ 24.2% Growth</span>
-                </div>
+                <div className="absolute -top-12 -right-12 w-48 h-48 bg-red-500/10 blur-[60px] rounded-full"></div>
+                <h3 className="font-mono text-[10px] font-black uppercase tracking-[0.4em] opacity-40 mb-4">Core_Revenue_Target</h3>
+                <p className="text-6xl font-black tracking-tighter text-white mb-2">$1.42M</p>
+                <p className="text-[10px] font-mono text-gray-500 italic uppercase tracking-wider">Projected Yield 2026</p>
              </motion.div>
 
-             {/* Background Process Monitor (FLOATING STYLE) */}
-             <div className="bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl relative">
-                <h3 className="text-[10px] font-bold text-gray-500 mb-6 uppercase tracking-[0.3em] flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-cyberBlue rounded-full animate-ping"></div>
-                    Live Background Operations
+             {/* Background Operations Widget */}
+             <div className="glass-panel iron-glow rounded-[2.5rem] p-8">
+                <h3 className="text-[10px] font-black text-gray-500 mb-8 uppercase tracking-[0.4em] flex items-center gap-3">
+                    <div className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_red]"></div>
+                    BACKGROUND_THREADS
                 </h3>
-                <div className="space-y-6">
+                <div className="space-y-8">
                    {tasks.map(task => (
-                       <div key={task.id} className="space-y-2">
-                          <div className="flex justify-between items-center text-[10px]">
-                             <span className="font-bold text-gray-400">{task.name}</span>
-                             <span className={`font-mono ${task.status === 'Complete' ? 'text-matrixGreen' : 'text-cyberBlue animate-pulse'}`}>{task.progress}%</span>
+                       <div key={task.id} className="space-y-3">
+                          <div className="flex justify-between items-center text-[9px] font-mono">
+                             <span className="font-bold text-gray-400 uppercase tracking-widest">{task.name}</span>
+                             <span className="text-red-500">{task.progress}%</span>
                           </div>
                           <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                              <motion.div 
                                 initial={{ width: 0 }}
                                 animate={{ width: `${task.progress}%` }}
-                                className={`h-full ${task.status === 'Complete' ? 'bg-matrixGreen' : 'bg-cyberBlue Shadow-[0_0_8px_#00f3ff]'}`}
+                                className="h-full bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]"
                              />
                           </div>
                        </div>
@@ -195,31 +191,19 @@ export default function CommandDashboard() {
                 </div>
              </div>
 
-             {/* ROI Heatmap Widget */}
-             <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-6 text-center group cursor-pointer hover:border-purple-500/30 transition">
-                <div className="w-full aspect-video bg-[#050505] rounded-2xl flex items-center justify-center border border-dashed border-white/5 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-radial from-purple-500/10 to-transparent"></div>
-                    <span className="text-[10px] font-mono text-gray-600 group-hover:text-gray-400 transition">View Consolidated Compliance Heatmap</span>
-                </div>
-             </div>
-
           </div>
        </div>
 
-       {/* Persistent System Footer */}
-       <footer className="fixed bottom-6 left-6 right-6 z-50 pointer-events-none flex justify-between items-center">
-            <div className="flex gap-4">
-                <div className="px-4 py-2 bg-black/80 backdrop-blur-md border border-white/10 rounded-full font-mono text-[9px] text-gray-500 pointer-events-auto hover:text-white transition cursor-help flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-matrixGreen rounded-full"></span>
-                    SYSTEM_STABLE: NODE-AE-102
+       {/* Iron Footer */}
+       <footer className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+            <div className="glass-panel iron-glow px-10 py-3 rounded-full pointer-events-auto border-t-red-500/40">
+                <div className="flex items-center gap-8 font-mono text-[10px] tracking-[0.2em] font-black uppercase">
+                    <span className="text-white flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span> ARC: STABLE
+                    </span>
+                    <span className="text-gray-500">Nodes: AE-102-DXB</span>
+                    <span className="text-red-500 underline decoration-red-500/50">Press ⌘ K to Command</span>
                 </div>
-                <div className="px-4 py-2 bg-black/80 backdrop-blur-md border border-white/10 rounded-full font-mono text-[9px] text-gray-500 pointer-events-auto hover:text-white transition cursor-help flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-cyberBlue rounded-full animate-pulse"></span>
-                    OLLAMA_MESH: CONNECTED
-                </div>
-            </div>
-            <div className="bg-black/80 backdrop-blur-md border border-white/10 rounded-full px-4 py-2 pointer-events-auto flex items-center gap-3">
-                <span className="text-[10px] font-bold text-gray-400 font-mono tracking-tighter uppercase whitespace-nowrap">Press ⌘ K for Vanguard Omni-Terminal</span>
             </div>
        </footer>
 
