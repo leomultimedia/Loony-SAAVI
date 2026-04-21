@@ -7,31 +7,122 @@ datasource db {
   url      = "file:./dev.db"
 }
 
+// ─── SUPER ADMIN / PRODUCT ───────────────────────────────
 model Reseller {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
   tenants   Tenant[]
+  createdAt DateTime @default(now())
 }
 
+// ─── TENANT (Company) ────────────────────────────────────
 model Tenant {
-  id              String   @id @default(cuid())
-  name            String   @unique
-  email           String
-  status          String   @default("Active")
-  subscriptionTier String  @default("PRO")
-  
-  // BYOK Data
-  customApiKeys   String?  @default("{}")
-  
-  // Hierarchy
-  isMaster        Boolean  @default(false)
-  parentId        String?
-  parent          Tenant?  @relation("TenantHierarchy", fields: [parentId], references: [id])
-  subEntities     Tenant[] @relation("TenantHierarchy")
+  id               String   @id @default(cuid())
+  name             String   @unique
+  email            String
+  status           String   @default("Active")   // Active | Archived
+  subscriptionTier String   @default("PRO")       // PRO | SOVEREIGN
 
-  resellerId      String?
-  reseller        Reseller? @relation(fields: [resellerId], references: [id])
-  
-  createdAt       DateTime @default(now())
+  // Hierarchy
+  isMaster         Boolean  @default(false)
+  parentId         String?
+  parent           Tenant?  @relation("TenantHierarchy", fields: [parentId], references: [id])
+  subEntities      Tenant[] @relation("TenantHierarchy")
+
+  resellerId       String?
+  reseller         Reseller? @relation(fields: [resellerId], references: [id])
+
+  // Relations
+  integrations     Integration[]
+  salesUsers       SalesUser[]
+  leads            Lead[]
+  agentConfigs     AgentConfig[]
+  createdAt        DateTime @default(now())
+}
+
+// ─── PLUGIN INTEGRATIONS (per-tenant) ────────────────────
+model Integration {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  plugin      String   // WHATSAPP | HUBSPOT | GSHEET | CALCOM | STRIPE | VAPI | GROQ | OLLAMA
+  isEnabled   Boolean  @default(false)
+  config      String   @default("{}")  // JSON string: apiKey, webhookUrl, etc.
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, plugin])
+}
+
+// ─── AI AGENTS ───────────────────────────────────────────
+model AgentConfig {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  agentName   String   // Leo | Eva | Lia | James | Mary
+  isActive    Boolean  @default(false)
+  persona     String   @default("{}")  // JSON: tone, language, speciality
+  model       String   @default("llama3")  // llama3 | gpt-4o | groq/llama3-70b
+  vapiVoiceId String?  // Vapi voice ID for this agent's voice
+
+  leads       Lead[]   @relation("AssignedAgent")
+  createdAt   DateTime @default(now())
+
+  @@unique([tenantId, agentName])
+}
+
+// ─── SALES USERS ─────────────────────────────────────────
+model SalesUser {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  name      String
+  email     String
+  phone     String?
+  role      String   @default("SALES_REP")  // TENANT_ADMIN | SALES_REP | VIEWER
+  isActive  Boolean  @default(true)
+
+  leads     Lead[]   @relation("AssignedSalesUser")
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, email])
+}
+
+// ─── LEADS ───────────────────────────────────────────────
+model Lead {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  // Contact
+  name        String
+  company     String?
+  phone       String   // Stored redacted after PDPL scrub
+  email       String?
+  source      String   @default("MANUAL")  // EXCEL | GSHEET | HUBSPOT | MANUAL
+
+  // AI Pipeline
+  status      String   @default("NEW")  // NEW | CONTACTED | QUALIFIED | MEETING_SET | WON | LOST
+  aiScore     Int      @default(0)
+  chatLog     String   @default("[]")   // JSON string of WhatsApp messages
+  shadowAudit String   @default("{}")   // JSON: SSL, DMARC, ports
+
+  // Assignment
+  agentId     String?
+  agent       AgentConfig? @relation("AssignedAgent", fields: [agentId], references: [id])
+  salesUserId String?
+  salesUser   SalesUser?   @relation("AssignedSalesUser", fields: [salesUserId], references: [id])
+
+  // Meetings
+  meetingDate   String?
+  meetingLink   String?
+  calEventId    String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

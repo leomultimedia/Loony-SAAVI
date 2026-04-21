@@ -25,10 +25,6 @@ export async function POST(req: Request) {
                 isMaster: body.isMaster || false,
                 parentId: body.parentId || null,
                 status: 'Active',
-                customApiKeys: JSON.stringify({
-                    groq: body.groqKey,
-                    hubspot: body.hubspotKey
-                })
             }
         });
         return NextResponse.json(tenant);
