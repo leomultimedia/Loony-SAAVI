@@ -1,0 +1,47 @@
+# e:\\SAAVI\\Repo\\schema.graphql
+# Multi-Tenant Isolation Schema for Vanguard-OS
+
+type Tenant {
+  id: ID!
+  name: String!
+  subdomain: String!
+  settings: TenantSettings!
+  leads: [Lead!]!
+  audits: [CyberAudit!]!
+}
+
+type TenantSettings {
+  complianceShieldEnabled: Boolean!
+  modelGardenPreference: String!
+  killSwitchTriggered: String # ISO String for wipedAt timestamp
+}
+
+type Lead {
+  id: ID!
+  tenantId: ID!
+  encryptedPII: String!
+  hubSpotSyncStatus: String!
+  urgencyScore: Int!
+  scarcityPivotTriggered: Boolean!
+}
+
+type CyberAudit {
+  id: ID!
+  tenantId: ID!
+  relatedLeadId: ID!
+  iso27001RiskScore: Float!
+  iso42001RiskScore: Float!
+  adhicsRiskScore: Float!
+  pdfScorecardUrl: String
+}
+
+type Query {
+  # Universal access resolver filtered strictly by TenantID headers
+  getTenantAnalytics(tenantId: ID!): Tenant
+  getLeadAudits(leadId: ID!): [CyberAudit!]!
+}
+
+type Mutation {
+  triggerDarkScarcity(leadId: ID!): Lead!
+  executeKillSwitch(tenantId: ID!): Boolean!
+}
