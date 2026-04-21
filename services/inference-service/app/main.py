@@ -4,8 +4,13 @@
 from fastapi import FastAPI, Depends, HTTPException
 from typing import Optional
 from pydantic import BaseModel
+from app.pii_scrubber import PIIScrubber
+from app.sales_loop import AutonomousSalesLoop
 
 app = FastAPI(title="Vanguard Inference Service")
+scrubber = PIIScrubber()
+# Setup tenant configs
+sales_loop = AutonomousSalesLoop({"model": "Llama-3"})
 
 class ChatRequest(BaseModel):
     tenant_id: str
@@ -15,18 +20,22 @@ class ChatRequest(BaseModel):
 @app.post("/inference/chat")
 async def process_chat(request: ChatRequest):
     # Ported ModelRouter & Speculative Execution Logic
-    # 1. PII Scrubbing (Zero-Knowledge)
-    safe_message = scrub_pii(request.message)
+    # 1. PII Scrubbing (Zero-Knowledge Python Native)
+    safe_message = scrubber.redact(request.message)
     
     # 2. Ghost Call Prevention (Behavioral Analysis)
     if not is_human_verified(safe_message):
         return {"response": "Verification Required", "bot_score": 0.99}
 
-    # 3. Speculative Model Routing (Fast vs Complex)
-    # Fire Phi-3 for quick draft, Llama 70b in background
+    # 3. Behavioral Dark Psychology Checks
+    routing_strategy = sales_loop.evaluate_engagement([{"role": "user", "content": safe_message}])
+    if "SYSTEM_PROMPT_OVERRIDE" in routing_strategy:
+        return {"response": routing_strategy, "status": "scarcity_invoked"}
+
+    # 4. Speculative Model Routing (Fast vs Complex)
     quick_draft = execute_local_model("phi3", safe_message)
     
-    # 4. Emit Async Event to Audit Service via Kafka/Redis
+    # 5. Emit Async Event to Audit Service via Kafka/Redis
     emit_audit_event(request.tenant_id, request.session_id, safe_message, quick_draft)
 
     return {"response": quick_draft, "status": "speculative_complete"}
