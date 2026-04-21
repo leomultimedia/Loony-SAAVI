@@ -1,0 +1,94 @@
+version: '3.8'
+
+x-common-env: &common-env
+  REDIS_URL: redis://redis-queue:6379
+  KAFKA_BROKER: kafka:9092
+
+services:
+  # --- INFRASTRUCTURE ---
+  api-gateway:
+    image: traefik:v2.10
+    container_name: vanguard_gateway
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080" # Traefik dashboard
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  redis-queue:
+    image: redis:alpine
+    container_name: vanguard_redis
+
+  # --- MICROSERVICES ---
+
+  frontend-ux:
+    build: 
+      context: ./frontend
+    container_name: vanguard_frontend
+    labels:
+      - "traefik.http.routers.frontend.rule=Host(`loonyheads.local`)"
+
+  identity-saas-service:
+    build: 
+      context: ./services/identity-service
+    container_name: vanguard_identity
+    environment:
+      <<: *common-env
+      DATABASE_URL: postgresql://user:pass@db-identity:5432/identity
+    labels:
+      - "traefik.http.routers.identity.rule=Host(`api.loonyheads.local`) && PathPrefix(`/identity`)"
+
+  inference-vault-service:
+    build: 
+      context: ./services/inference-service
+    container_name: vanguard_inference
+    deploy:
+      resources:
+         reservations:
+           devices:
+             - driver: nvidia
+               capabilities: [gpu]
+    environment:
+      <<: *common-env
+      OLLAMA_HOST: http://ollama:11434
+    labels:
+      - "traefik.http.routers.inference.rule=Host(`api.loonyheads.local`) && PathPrefix(`/inference`)"
+
+  audit-service:
+    build:
+      context: ./services/audit-service
+    container_name: vanguard_audit
+    environment:
+      <<: *common-env
+      DATABASE_URL: postgresql://user:pass@db-audit:5432/audit
+    labels:
+      - "traefik.http.routers.audit.rule=Host(`api.loonyheads.local`) && PathPrefix(`/audit`)"
+      
+  # --- DATABASES ---
+  db-identity:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: identity
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+
+  db-audit:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: audit
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+
+  # The Local AI Brain
+  ollama:
+    image: ollama/ollama:latest
+    deploy:
+      resources:
+         reservations:
+           devices:
+             - driver: nvidia
+               capabilities: [gpu]
