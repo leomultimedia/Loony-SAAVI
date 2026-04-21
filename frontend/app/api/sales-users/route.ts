@@ -7,13 +7,16 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenantId');
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
-
-    const users = await prisma.salesUser.findMany({
-        where: { tenantId },
-        include: { _count: { select: { leads: true } } },
-        orderBy: { createdAt: 'desc' },
-    });
-    return NextResponse.json(users);
+    try {
+        const users = await prisma.salesUser.findMany({
+            where: { tenantId },
+            include: { _count: { select: { leads: true } } },
+            orderBy: { createdAt: 'desc' },
+        });
+        return NextResponse.json(users);
+    } catch {
+        return NextResponse.json([]);
+    }
 }
 
 export async function POST(req: Request) {

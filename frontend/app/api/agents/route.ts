@@ -15,24 +15,19 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenantId');
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
-
-    // Ensure all 5 agents exist for tenant
-    await Promise.all(Object.entries(AGENT_PERSONAS).map(([name, persona]) =>
-        prisma.agentConfig.upsert({
-            where: { tenantId_agentName: { tenantId, agentName: name } },
-            update: {},
-            create: {
-                tenantId,
-                agentName: name,
-                isActive: name === 'Leo', // Leo is default
-                persona: JSON.stringify(persona),
-                model: 'llama3',
-            },
-        })
-    ));
-
-    const agents = await prisma.agentConfig.findMany({ where: { tenantId } });
-    return NextResponse.json(agents.map(a => ({ ...a, persona: JSON.parse(a.persona) })));
+    try {
+        await Promise.all(Object.entries(AGENT_PERSONAS).map(([name, persona]) =>
+            prisma.agentConfig.upsert({
+                where: { tenantId_agentName: { tenantId, agentName: name } },
+                update: {},
+                create: { tenantId, agentName: name, isActive: name === 'Leo', persona: JSON.stringify(persona), model: 'llama3' },
+            })
+        ));
+        const agents = await prisma.agentConfig.findMany({ where: { tenantId } });
+        return NextResponse.json(agents.map(a => ({ ...a, persona: JSON.parse(a.persona) })));
+    } catch {
+        return NextResponse.json([]);
+    }
 }
 
 export async function PATCH(req: Request) {

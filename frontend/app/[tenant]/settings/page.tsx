@@ -49,6 +49,18 @@ const VOICE_IDS: Record<string, string> = {
   Leo: '11labs-will', Eva: '11labs-bella', Lia: '11labs-elli', James: '11labs-adam', Mary: '11labs-rachel',
 };
 
+// Safe fetch helper — never throws on empty/error responses
+async function safeFetch(url: string, opts?: RequestInit) {
+  try {
+    const res = await fetch(url, opts);
+    const text = await res.text();
+    if (!text) return null;
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 export default function SettingsPage() {
   const { tenant } = useParams();
   const router = useRouter();
@@ -62,41 +74,44 @@ export default function SettingsPage() {
   const [pluginConfigs, setPluginConfigs] = useState<Record<string, any>>({});
   const [newUser, setNewUser] = useState({ name: '', email: '', phone: '', role: 'SALES_REP' });
   const [addingUser, setAddingUser] = useState(false);
+  // Security toggles — must be hooks at component level, NOT inside .map()
+  const [secPdpl, setSecPdpl] = useState(true);
+  const [secAudit, setSecAudit] = useState(true);
+  const [secAdhics, setSecAdhics] = useState(false);
+  const [secZkp, setSecZkp] = useState(true);
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('vanguard_tenants') || '[]');
     const entity = stored[0] || { id: 'demo-tenant', name: 'Lear Cyber tech', email: 'admin@lct.com' };
     setTenantData(entity);
-
-    // Fetch real data
     const tid = entity.id;
     Promise.all([
-      fetch(`/api/integrations?tenantId=${tid}`).then(r => r.json()),
-      fetch(`/api/agents?tenantId=${tid}`).then(r => r.json()),
-      fetch(`/api/sales-users?tenantId=${tid}`).then(r => r.json()),
+      safeFetch(`/api/integrations?tenantId=${tid}`),
+      safeFetch(`/api/agents?tenantId=${tid}`),
+      safeFetch(`/api/sales-users?tenantId=${tid}`),
     ]).then(([ints, ags, users]) => {
       if (Array.isArray(ints)) setIntegrations(ints);
       if (Array.isArray(ags)) setAgents(ags);
       if (Array.isArray(users)) setSalesUsers(users);
-    }).catch(console.error);
+    });
   }, []);
 
   const savePlugin = async (pluginKey: string, isEnabled: boolean) => {
     setSaving(pluginKey);
     const config = pluginConfigs[pluginKey] || {};
-    const res = await fetch('/api/integrations', {
+    const updated = await safeFetch('/api/integrations', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tenantId: tenantData?.id, plugin: pluginKey, isEnabled, config }),
     });
-    const updated = await res.json();
-    setIntegrations(prev => prev.map(i => i.plugin === pluginKey ? updated : i));
+    if (updated) setIntegrations(prev => prev.map(i => i.plugin === pluginKey ? updated : i));
+    else setIntegrations(prev => prev.map(i => i.plugin === pluginKey ? { ...i, isEnabled } : i));
     setSaving(null);
   };
 
   const toggleAgent = async (agentName: string, isActive: boolean) => {
     setSaving(agentName);
-    await fetch('/api/agents', {
+    await safeFetch('/api/agents', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tenantId: tenantData?.id, agentName, isActive }),
@@ -106,7 +121,7 @@ export default function SettingsPage() {
   };
 
   const saveAgentModel = async (agentName: string, model: string) => {
-    await fetch('/api/agents', {
+    await safeFetch('/api/agents', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tenantId: tenantData?.id, agentName, model, vapiVoiceId: VOICE_IDS[agentName] }),
@@ -117,13 +132,12 @@ export default function SettingsPage() {
   const addUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddingUser(true);
-    const res = await fetch('/api/sales-users', {
+    const user = await safeFetch('/api/sales-users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...newUser, tenantId: tenantData?.id }),
     });
-    const user = await res.json();
-    setSalesUsers(prev => [user, ...prev]);
+    if (user) setSalesUsers(prev => [user, ...prev]);
     setNewUser({ name: '', email: '', phone: '', role: 'SALES_REP' });
     setAddingUser(false);
   };
@@ -384,24 +398,21 @@ export default function SettingsPage() {
         {activeTab === 'SECURITY' && (
           <div className="space-y-6 max-w-2xl">
             {[
-              { label: 'GDPR / UAE PDPL Shield', desc: 'Auto-redacts PII (phone, email) before AI processing. Required for TDRA compliance.', default: true, key: 'pdpl' },
-              { label: 'ISO 27001 Audit Logging', desc: 'Every automated message logged with timestamp and confidence score.', default: true, key: 'audit' },
-              { label: 'ADHICS V2.0 Compliance Mode', desc: 'Maps lead conversations to health sector standards automatically.', default: false, key: 'adhics' },
-              { label: 'Zero-Knowledge AI Inference', desc: 'Processed locally — no data sent to external models without explicit BYOK.', default: true, key: 'zkp' },
-            ].map(item => {
-              const [on, setOn] = useState(item.default);
-              return (
-                <div key={item.key} className="glass-panel rounded-3xl p-8 flex items-center gap-8">
-                  <div className="flex-1">
-                    <p className="font-black">{item.label}</p>
-                    <p className="text-xs text-gray-500 mt-1 font-mono">{item.desc}</p>
-                  </div>
-                  <button onClick={() => setOn(!on)} className={`w-14 h-7 rounded-full relative transition flex-shrink-0 ${on ? 'bg-matrixGreen' : 'bg-white/10'}`}>
-                    <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-all ${on ? 'left-7' : 'left-0.5'}`}></div>
-                  </button>
+              { label: 'GDPR / UAE PDPL Shield', desc: 'Auto-redacts PII (phone, email) before AI processing. Required for TDRA compliance.', on: secPdpl, set: setSecPdpl },
+              { label: 'ISO 27001 Audit Logging', desc: 'Every automated message logged with timestamp and confidence score.', on: secAudit, set: setSecAudit },
+              { label: 'ADHICS V2.0 Compliance Mode', desc: 'Maps lead conversations to health sector standards automatically.', on: secAdhics, set: setSecAdhics },
+              { label: 'Zero-Knowledge AI Inference', desc: 'Processed locally — no data sent to external models without explicit BYOK.', on: secZkp, set: setSecZkp },
+            ].map(item => (
+              <div key={item.label} className="glass-panel rounded-3xl p-8 flex items-center gap-8">
+                <div className="flex-1">
+                  <p className="font-black">{item.label}</p>
+                  <p className="text-xs text-gray-500 mt-1 font-mono">{item.desc}</p>
                 </div>
-              );
-            })}
+                <button onClick={() => item.set(!item.on)} className={`w-14 h-7 rounded-full relative transition flex-shrink-0 ${item.on ? 'bg-matrixGreen' : 'bg-white/10'}`}>
+                  <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-all ${item.on ? 'left-7' : 'left-0.5'}`}></div>
+                </button>
+              </div>
+            ))}
           </div>
         )}
 

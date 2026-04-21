@@ -9,18 +9,19 @@ export async function GET(req: Request) {
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
 
     const plugins = ['WHATSAPP', 'HUBSPOT', 'GSHEET', 'CALCOM', 'STRIPE', 'VAPI', 'GROQ', 'OLLAMA'];
-    
-    // Ensure all plugins exist for this tenant
-    await Promise.all(plugins.map(plugin =>
-        prisma.integration.upsert({
-            where: { tenantId_plugin: { tenantId, plugin } },
-            update: {},
-            create: { tenantId, plugin, isEnabled: false, config: '{}' },
-        })
-    ));
-
-    const integrations = await prisma.integration.findMany({ where: { tenantId } });
-    return NextResponse.json(integrations);
+    try {
+        await Promise.all(plugins.map(plugin =>
+            prisma.integration.upsert({
+                where: { tenantId_plugin: { tenantId, plugin } },
+                update: {},
+                create: { tenantId, plugin, isEnabled: false, config: '{}' },
+            })
+        ));
+        const integrations = await prisma.integration.findMany({ where: { tenantId } });
+        return NextResponse.json(integrations);
+    } catch {
+        return NextResponse.json([]);
+    }
 }
 
 export async function PATCH(req: Request) {
