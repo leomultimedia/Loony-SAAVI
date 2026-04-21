@@ -22,15 +22,27 @@ export default function CommandDashboard() {
     : [];
 
   const exportDataExcel = () => {
-      // Generates a native structured CSV format natively recognized by MS Excel
-      const csvData = "Lead ID,Lead Phone,Risk Score,ISO 27001 Gaps,Pipeline Status\nIDX-992,+971501234567,HIGH,Missing SSL/DMARC,Negotiating\nIDX-993,+44812345678,LOW,None,Closed";
+      if (!currentEntity) return;
+
+      // Generates a native structured CSV format using REAL tenant data
+      const headers = "Entity Name,Admin Email,Subscription Tier,Status,Export Date\n";
+      const row = `${currentEntity.name},${currentEntity.email},${currentEntity.tier},${currentEntity.status},${new Date().toLocaleString()}\n`;
+      const leadData = "\nLead ID,Lead Phone,Risk Score,ISO 27001 Gaps,Pipeline Status\nIDX-992,+971501234567,HIGH,Missing SSL/DMARC,Negotiating\nIDX-993,+44812345678,LOW,None,Closed";
+      
+      const csvData = headers + row + leadData;
       const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
+      
       const a = document.createElement('a');
+      a.style.display = 'none';
       a.href = url;
-      a.setAttribute('download', 'Vanguard_Tenant_Data_Export.csv');
+      a.download = `Vanguard_Export_${currentEntity.name.replace(/\s+/g, '_')}.csv`;
+      
       document.body.appendChild(a);
       a.click();
+      
+      // Cleanup to prevent memory leaks and UUID file traces
+      window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
   };
 
