@@ -33,6 +33,12 @@ model Tenant {
   subscriptionTier String   @default("EDGE") // EDGE, PRO, SOVEREIGN
   stripeCustomerId String?
 
+  // Hierarchy: Master & Sub-Entities
+  isMaster        Boolean   @default(false)
+  parentId        String?
+  parent          Tenant?   @relation("TenantHierarchy", fields: [parentId], references: [id])
+  subEntities     Tenant[]  @relation("TenantHierarchy")
+
   reseller        Reseller? @relation(fields: [resellerId], references: [id])
 }
 

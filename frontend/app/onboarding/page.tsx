@@ -1,23 +1,44 @@
 "use client";
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
 export default function TenantOnboarding() {
     const router = useRouter();
     const [step, setStep] = useState(1);
+    const [error, setError] = useState('');
     const [formData, setFormData] = useState({
         companyName: '',
         email: '',
         groqKey: '',
         hubspotKey: '',
         plan: 'pro',
-        mrr: 499
+        mrr: 499,
+        isMaster: false,
+        parentId: ''
     });
 
+    // Student-level helper text
+    const tips = [
+        "Create your core identity. Remember: Your Entity Name must be unique globally!",
+        "Master Entities can oversee many sub-entities. Perfect for holding companies.",
+        "Your BYOK keys keep you independent. We can't see your data!",
+        "Finalize your node deployment. All systems are green."
+    ];
+
+    const validateName = (name: string) => {
+        const stored = JSON.parse(localStorage.getItem('vanguard_tenants') || '[]');
+        return !stored.some((t: any) => t.name.toLowerCase() === name.toLowerCase());
+    };
+
     const handleOnboard = () => {
-        // Save tenant strictly to local persistent data stream for zero-mock operations
+        if (!validateName(formData.companyName)) {
+            setError("CRITICAL ERROR: This Entity Name is already registered in the Vanguard Grid. Please choose a unique name.");
+            setStep(1);
+            return;
+        }
+
         const stored = JSON.parse(localStorage.getItem('vanguard_tenants') || '[]');
         const newEntity = {
             id: 'tnt_' + Math.random().toString(36).substring(2, 9),
@@ -26,108 +47,184 @@ export default function TenantOnboarding() {
             tier: formData.plan.toUpperCase(),
             mrr: formData.mrr,
             status: 'Active',
-            onboarded: new Date().toISOString().split('T')[0]
+            onboarded: new Date().toISOString().split('T')[0],
+            isMaster: formData.isMaster,
+            parentId: formData.parentId || null
         };
         
         localStorage.setItem('vanguard_tenants', JSON.stringify([...stored, newEntity]));
 
-        alert(`Congratulations! ${formData.companyName} is onboarded to the $${formData.mrr} Omni-SaaS ${formData.plan.toUpperCase()} tier! We will now transfer you to the Command Center to finalize verification.`);
+        alert(`PROVISIONING COMPLETE: [${formData.companyName}] is now a Sovereign Node. Accessing Master Console...`);
         router.push('/admin');
     };
 
+    const masters = JSON.parse(typeof window !== 'undefined' ? localStorage.getItem('vanguard_tenants') || '[]' : '[]').filter((t: any) => t.isMaster);
+
     return (
-        <main className="min-h-screen bg-[#050505] text-white flex justify-center items-center p-6 font-mono selection:bg-matrixGreen selection:text-black">
-            
-            <div className="absolute top-0 left-0 w-full h-2 bg-white/10">
-                <motion.div className="h-full bg-matrixGreen shadow-[0_0_10px_#00ff41]" initial={{ width: "0%" }} animate={{ width: `${(step / 3) * 100}%` }}></motion.div>
+        <main className="min-h-screen bg-[#050505] text-white flex justify-center items-center p-6 font-mono">
+            {/* Progress Bar */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-white/5">
+                <motion.div className="h-full bg-cyberBlue" initial={{ width: "0%" }} animate={{ width: `${(step / 4) * 100}%` }}></motion.div>
             </div>
 
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-2xl bg-white/5 border border-white/10 p-8 md:p-12 rounded-3xl shadow-2xl backdrop-blur-xl">
+            <motion.div layout className="w-full max-w-2xl bg-[#0a0a0a] border border-white/10 p-8 md:p-12 rounded-[2rem] shadow-2xl relative overflow-hidden">
+                <div className="absolute -top-24 -right-24 w-64 h-64 bg-cyberBlue/10 blur-[100px] rounded-full pointer-events-none"></div>
                 
+                {/* Error Banner */}
+                <AnimatePresence>
+                    {error && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-500 text-xs font-bold font-mono overflow-hidden">
+                            {error}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {step === 1 && (
-                    <div id="step-1">
-                        <h1 className="text-3xl font-display font-bold mb-4">Welcome. Let's set up your Company.</h1>
-                        
-                        <div className="p-4 bg-cyberBlue/10 border border-cyberBlue/20 rounded-lg mb-8">
-                            <p className="text-xs text-cyberBlue">💡️ <strong>Helpful Tip:</strong> Enter your exact legal company name and the email of the absolute top-level administrator. We will bind cryptographic secrets to this exact identity.</p>
-                        </div>
+                    <div>
+                        <h1 className="text-3xl font-display font-bold mb-2">Entity Registration</h1>
+                        <p className="text-gray-500 text-sm mb-10">Step 1: Global Identity Mapping</p>
                         
                         <div className="space-y-6">
                             <div>
-                                <label className="block text-sm font-bold mb-2">My Company Name is:</label>
-                                <input type="text" className="w-full bg-black border border-white/10 rounded-lg p-4 focus:border-matrixGreen outline-none text-lg transition" value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} placeholder="e.g. Lear Cyber tech" />
+                                <label className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-widest">Entity Name (Must be Unique)</label>
+                                <input 
+                                    type="text" 
+                                    className={`w-full bg-black border ${error ? 'border-red-500' : 'border-white/10'} rounded-2xl p-4 focus:border-cyberBlue outline-none text-lg transition shadow-inner`}
+                                    value={formData.companyName}
+                                    onChange={e => { setFormData({...formData, companyName: e.target.value}); setError(''); }}
+                                    placeholder="Acme Systems"
+                                />
+                                <p className="mt-2 text-[10px] text-gray-600 italic">Vanguard check: Name determines your unique cryptographic vault address.</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-bold mb-2">My Administrator Email is:</label>
-                                <input type="email" className="w-full bg-black border border-white/10 rounded-lg p-4 focus:border-matrixGreen outline-none text-lg transition" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="e.g. admin@lct.com" />
+                                <label className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-widest">Master Admin Email</label>
+                                <input 
+                                    type="email" 
+                                    className="w-full bg-black border border-white/10 rounded-2xl p-4 focus:border-cyberBlue outline-none text-lg transition shadow-inner"
+                                    value={formData.email}
+                                    onChange={e => setFormData({...formData, email: e.target.value})}
+                                    placeholder="admin@acme.com"
+                                />
                             </div>
                         </div>
 
-                        <button id="btn-next-1" disabled={!formData.companyName || !formData.email} onClick={() => setStep(2)} className="w-full mt-10 bg-white text-black font-extrabold py-4 rounded-lg hover:bg-gray-200 transition disabled:opacity-50 text-lg shadow-[0_0_20px_rgba(255,255,255,0.2)]">Continue to Settings &rarr;</button>
+                        <button onClick={() => setStep(2)} disabled={!formData.companyName || !formData.email} className="w-full mt-10 bg-white text-black font-extrabold py-4 rounded-2xl hover:bg-cyberBlue transition disabled:opacity-30 group shadow-[0_0_30px_rgba(255,255,255,0.05)]">
+                            Next Stage: Hierarchy Setup &rarr;
+                        </button>
                     </div>
                 )}
 
                 {step === 2 && (
-                    <div id="step-2">
-                        <h1 className="text-3xl font-display font-bold mb-4">Plugin Your Keys (Optional)</h1>
+                    <div>
+                        <h1 className="text-3xl font-display font-bold mb-2">Hierarchy Mapping</h1>
+                        <p className="text-gray-500 text-sm mb-10">Step 2: Defining Entity Relationships</p>
                         
-                        <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg mb-8">
-                            <p className="text-xs text-purple-400">💡️ <strong>Helpful Tip:</strong> You aren't forced to use our AI. If you have your own Groq AI key or HubSpot CRM key, paste them here. The system will route data to *your* personal private accounts. If you don't have them, just click Continue!</p>
-                        </div>
-                        
-                        <div className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-bold mb-2 text-gray-300">My Personal Groq API Key (If I have one):</label>
-                                <input type="password" placeholder="Leave empty for Vanguard Local" className="w-full bg-black border border-white/10 rounded-lg p-4 focus:border-purple-500 outline-none text-gray-300" value={formData.groqKey} onChange={e => setFormData({...formData, groqKey: e.target.value})} />
+                        <div className="space-y-8">
+                            <div className="flex gap-4">
+                                <button 
+                                    onClick={() => setFormData({...formData, isMaster: true, parentId: ''})}
+                                    className={`flex-1 p-6 border rounded-3xl transition text-left group ${formData.isMaster ? 'border-purple-500 bg-purple-500/5 shadow-[0_0_20px_rgba(168,85,247,0.2)]' : 'border-white/10'}`}
+                                >
+                                    <div className={`w-8 h-8 rounded-lg mb-4 flex items-center justify-center font-bold text-xs ${formData.isMaster ? 'bg-purple-500 text-black' : 'bg-white/10 text-white'}`}>M</div>
+                                    <div className={`font-bold mb-1 ${formData.isMaster ? 'text-white' : 'text-gray-400'}`}>Master Entity</div>
+                                    <p className="text-[10px] text-gray-500 leading-tight">Controls multiple sub-entities and consolidated billing.</p>
+                                </button>
+                                <button 
+                                    onClick={() => setFormData({...formData, isMaster: false})}
+                                    className={`flex-1 p-6 border rounded-3xl transition text-left group ${!formData.isMaster ? 'border-cyberBlue bg-cyberBlue/5 shadow-[0_0_20px_rgba(0,243,255,0.2)]' : 'border-white/10'}`}
+                                >
+                                    <div className={`w-8 h-8 rounded-lg mb-4 flex items-center justify-center font-bold text-xs ${!formData.isMaster ? 'bg-cyberBlue text-black' : 'bg-white/10 text-white'}`}>S</div>
+                                    <div className={`font-bold mb-1 ${!formData.isMaster ? 'text-white' : 'text-gray-400'}`}>Standalone / Sub</div>
+                                    <p className="text-[10px] text-gray-500 leading-tight">Individual node. Can optionally be controlled by a Master.</p>
+                                </button>
                             </div>
-                            <div>
-                                <label className="block text-sm font-bold mb-2 text-gray-300">My HubSpot API Tracker (If I have one):</label>
-                                <input type="password" placeholder="Leave empty for Local MS Excel logging" className="w-full bg-black border border-white/10 rounded-lg p-4 focus:border-orange-500 outline-none text-gray-300" value={formData.hubspotKey} onChange={e => setFormData({...formData, hubspotKey: e.target.value})} />
-                            </div>
+
+                            {(!formData.isMaster && masters.length > 0) && (
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-widest">Assign to Master (Optional)</label>
+                                    <select 
+                                        className="w-full bg-black border border-white/10 rounded-2xl p-4 focus:border-cyberBlue outline-none text-sm transition appearance-none cursor-pointer"
+                                        value={formData.parentId}
+                                        onChange={e => setFormData({...formData, parentId: e.target.value})}
+                                    >
+                                        <option value="">Standalone Sovereign Entity</option>
+                                        {masters.map((m: any) => (
+                                            <option key={m.id} value={m.id}>{m.name} (Master)</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="flex gap-4 mt-10">
-                            <button onClick={() => setStep(1)} className="w-1/3 bg-transparent border border-white/20 text-white font-bold py-4 rounded-lg hover:bg-white/5 transition">Back</button>
-                            <button id="btn-next-2" onClick={() => setStep(3)} className="w-2/3 bg-white text-black font-extrabold py-4 rounded-lg hover:bg-gray-200 transition shadow-[0_0_20px_rgba(255,255,255,0.2)]">Continue to Tier Plan &rarr;</button>
+                        <div className="flex gap-4 mt-12">
+                            <button onClick={() => setStep(1)} className="flex-1 bg-transparent border border-white/10 text-gray-500 py-4 rounded-2xl hover:text-white transition uppercase font-bold text-xs">Previous</button>
+                            <button onClick={() => setStep(3)} className="flex-[2] bg-white text-black font-extrabold py-4 rounded-2xl hover:bg-cyberBlue transition text-sm">Next Stage: BYOK Setup &rarr;</button>
                         </div>
                     </div>
                 )}
 
                 {step === 3 && (
-                    <div id="step-3">
-                        <h1 className="text-3xl font-display font-bold mb-4">Final Configuration & Billing</h1>
+                    <div>
+                        <h1 className="text-3xl font-display font-bold mb-2">BYOK Independence</h1>
+                        <p className="text-gray-500 text-sm mb-10">Step 3: Plugging in Dynamic Infra</p>
                         
-                        <div className="p-4 bg-matrixGreen/10 border border-matrixGreen/40 rounded-lg mb-8 shadow-[0_0_20px_rgba(0,255,65,0.1)]">
-                            <p className="text-xs text-matrixGreen">💡️ <strong>Helpful Tip:</strong> We are launching you onto the <strong>Omni-SaaS Pro</strong> tier. It costs exactly <strong>$499 per month</strong> flat. Below is your final Stripe checkout sequence which will lock you in.</p>
-                        </div>
-
-                        <div className="bg-black border border-white/20 p-6 rounded-xl mb-8 flex justify-between items-center group hover:border-cyberBlue transition">
+                        <div className="space-y-6">
                             <div>
-                                <h3 className="font-bold text-xl text-cyberBlue uppercase tracking-widest">Omni-SaaS Pro</h3>
-                                <p className="text-xs text-gray-500 mt-1">Includes the Ghost-Protocol Leads Engine</p>
+                                <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-[0.2em] px-1">Cloud Inference (Groq Key)</label>
+                                <input type="password" placeholder="Leave empty for local GPU node" className="w-full bg-black border border-white/10 rounded-2xl p-4 focus:border-purple-500 outline-none text-sm shadow-inner transition" value={formData.groqKey} onChange={e => setFormData({...formData, groqKey: e.target.value})} />
                             </div>
-                            <div className="text-right">
-                                <span className="text-3xl font-extrabold">$499</span>
-                                <span className="text-gray-500"> / mo</span>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4 mb-10">
                             <div>
-                                <label className="block text-sm font-bold mb-2">Simulated Credit Card Entry</label>
-                                <input type="text" placeholder="Type anything. We are simulating a secure Stripe Vault charge." className="w-full bg-[#111] border border-white/5 rounded-lg p-4 outline-none text-gray-400 font-mono" />
+                                <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-[0.2em] px-1">CRM Sync (Hubspot PAT)</label>
+                                <input type="password" placeholder="Leave empty for Excel CSV logs" className="w-full bg-black border border-white/10 rounded-2xl p-4 focus:border-orange-500 outline-none text-sm shadow-inner transition" value={formData.hubspotKey} onChange={e => setFormData({...formData, hubspotKey: e.target.value})} />
                             </div>
                         </div>
 
-                        <div className="flex gap-4 mt-8">
-                            <button onClick={() => setStep(2)} className="w-1/4 bg-transparent border border-white/20 text-white font-bold py-4 rounded-lg hover:bg-white/5 transition">Back</button>
-                            <button id="btn-complete" onClick={handleOnboard} className="w-3/4 bg-matrixGreen text-black font-extrabold py-4 rounded-lg hover:bg-[#00cc33] flex justify-center items-center gap-3 transition shadow-[0_0_30px_rgba(0,255,65,0.4)] text-xl tracking-tight">
-                                Complete $499 Purchase
+                        <div className="flex gap-4 mt-12">
+                            <button onClick={() => setStep(2)} className="flex-1 bg-transparent border border-white/10 text-gray-500 py-4 rounded-2xl hover:text-white transition uppercase font-bold text-xs">Previous</button>
+                            <button onClick={() => setStep(4)} className="flex-[2] bg-white text-black font-extrabold py-4 rounded-2xl hover:bg-cyberBlue transition text-sm">Review & Launch &rarr;</button>
+                        </div>
+                    </div>
+                )}
+
+                {step === 4 && (
+                    <div id="step-4">
+                        <h1 className="text-3xl font-display font-bold mb-2">Vanguard Activation</h1>
+                        <p className="text-gray-500 text-sm mb-10">Step 4: Final Subscription Lock-in</p>
+                        
+                        <div className="bg-cyberBlue/10 border border-cyberBlue/30 p-6 rounded-3xl mb-8 relative group cursor-default shadow-[0_0_40px_rgba(0,243,255,0.05)]">
+                             <div className="flex justify-between items-center mb-1">
+                                 <span className="font-bold text-cyberBlue">
+                                     {formData.isMaster ? 'SOVEREIGN MASTER HUB' : 'OMNI-SAAS PRO NODE'}
+                                 </span>
+                                 <span className="text-xl font-bold">${formData.isMaster ? 1999 : 499} / mo</span>
+                             </div>
+                             <p className="text-[10px] text-gray-600 font-mono tracking-tighter">Unlimited Shadow Audits + Ghost-Hunter Pipeline Enabled.</p>
+                             <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-cyberBlue rounded-full shadow-[0_0_8px_#00f3ff]"></div>
+                        </div>
+
+                        <div className="mb-10 p-1 font-mono text-[9px] text-gray-600 bg-white/5 rounded px-2 py-1 flex items-center justify-between">
+                            <span>MOCK_STRIPE_HANDSHAKE: ACTIVE</span>
+                            <span className="text-matrixGreen">STATUS: SECURE_VAULT_ENABLED</span>
+                        </div>
+
+                        <div className="flex gap-4">
+                            <button onClick={() => setStep(3)} className="flex-1 bg-transparent border border-white/10 text-gray-500 py-4 rounded-2xl hover:text-white transition uppercase font-bold text-xs">Back</button>
+                            <button id="btn-complete" onClick={handleOnboard} className="flex-[3] bg-matrixGreen text-black font-extrabold py-4 rounded-2xl hover:bg-[#00cc33] flex justify-center items-center gap-3 transition shadow-[0_0_40px_rgba(0,255,65,0.2)] text-lg">
+                                EXECUTE DEPLOYMENT
+                                <span className="w-2 h-2 bg-black rounded-full animate-ping"></span>
                             </button>
                         </div>
                     </div>
                 )}
 
+                {/* Helpful Student Insight */}
+                <div className="mt-12 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        <span className="text-[10px] font-bold text-gray-400 font-mono">STUDENT INSIGHT</span>
+                    </div>
+                    <p className="text-[10px] text-gray-500 leading-relaxed italic">{tips[step-1]}</p>
+                </div>
             </motion.div>
         </main>
     );
