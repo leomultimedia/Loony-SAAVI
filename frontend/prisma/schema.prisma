@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Reseller {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  tenants   Tenant[]
+}
+
+model Tenant {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  email           String
+  status          String   @default("Active")
+  subscriptionTier String  @default("PRO")
+  
+  // BYOK Data
+  customApiKeys   String?  @default("{}")
+  
+  // Hierarchy
+  isMaster        Boolean  @default(false)
+  parentId        String?
+  parent          Tenant?  @relation("TenantHierarchy", fields: [parentId], references: [id])
+  subEntities     Tenant[] @relation("TenantHierarchy")
+
+  resellerId      String?
+  reseller        Reseller? @relation(fields: [resellerId], references: [id])
+  
+  createdAt       DateTime @default(now())
+}

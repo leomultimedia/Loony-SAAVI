@@ -15,10 +15,13 @@ export interface ModelConfig {
 }
 
 export class ModelRouter {
-  private ollamaEndpoint = process.env.OLLAMA_ENDPOINT || 'http://localhost:11434';
-  private groqEndpoint = process.env.GROQ_API_URL;
+  private ollamaEndpoint: string;
+  private groqApiKey: string;
 
-  constructor(private config: ModelConfig) {}
+  constructor(endpoint: string, apiKey: string) {
+      this.ollamaEndpoint = endpoint;
+      this.groqApiKey = apiKey;
+  }
 
   /**
    * Route the request based on task complexity.
@@ -27,15 +30,15 @@ export class ModelRouter {
    */
   async execute(
     prompt: string, 
-    complexity: ModelType, 
+    complexity: ModelType = 'low-latency', 
     onQuickDraft?: (draft: string) => void
   ): Promise<string> {
     
     // Ghost-Call / PII Scrubbing happens before this router
-    if (this.config.source === 'local') {
-      return this.routeLocal(prompt, complexity, onQuickDraft);
+    if (this.groqApiKey) {
+       return this.routeCloud(prompt, complexity);
     } else {
-      return this.routeCloud(prompt, complexity);
+       return this.routeLocal(prompt, complexity, onQuickDraft);
     }
   }
 
@@ -44,21 +47,18 @@ export class ModelRouter {
     complexity: ModelType, 
     onQuickDraft?: (draft: string) => void
   ): Promise<string> {
-    
+    const speedModel = "phi3";
+    const depthModel = "llama3-70b";
+
     if (complexity === 'high-complexity' && onQuickDraft) {
-      // Speculative Execution: Kick off small model synchronously
-      this.callOllama(prompt, this.config.preferredModels.speed)
+      this.callOllama(prompt, speedModel)
         .then(draft => onQuickDraft(draft))
         .catch(console.error);
         
-      // Await large model
-      return await this.callOllama(prompt, this.config.preferredModels.depth);
+      return await this.callOllama(prompt, depthModel);
     }
 
-    const targetModel = complexity === 'low-latency' 
-      ? this.config.preferredModels.speed 
-      : this.config.preferredModels.depth;
-
+    const targetModel = complexity === 'low-latency' ? speedModel : depthModel;
     return await this.callOllama(prompt, targetModel);
   }
 
