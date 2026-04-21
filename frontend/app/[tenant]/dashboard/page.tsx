@@ -3,11 +3,30 @@ import { motion } from 'framer-motion';
 import { OmniCommandBar } from '../../../components/omni/OmniCommandBar';
 
 export default function CommandDashboard() {
+  const exportDataExcel = () => {
+      // Generates a native structured CSV format natively recognized by MS Excel
+      const csvData = "Lead ID,Lead Phone,Risk Score,ISO 27001 Gaps,Pipeline Status\nIDX-992,+971501234567,HIGH,Missing SSL/DMARC,Negotiating\nIDX-993,+44812345678,LOW,None,Closed";
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.setAttribute('download', 'Vanguard_Tenant_Data_Export.csv');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+  };
+
   return (
     <main className="min-h-screen bg-[#050505] text-gray-100 font-sans p-6 overflow-hidden flex flex-col relative">
        
        {/* Global Cmd+K Palette */}
        <OmniCommandBar />
+
+       <div className="flex justify-end w-full max-w-6xl mx-auto mb-4 relative z-20">
+           <button onClick={exportDataExcel} className="font-mono text-xs bg-black border border-cyberBlue/40 text-cyberBlue px-4 py-2 rounded-lg hover:bg-cyberBlue hover:text-black transition flex items-center gap-2">
+              ↓ Download Tenant Data (Excel)
+           </button>
+       </div>
 
        {/* OMNI-BAR / NO MENUS */}
        <header className="flex justify-center mb-8 pt-4 z-10 w-full relative">

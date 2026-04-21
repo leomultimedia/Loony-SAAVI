@@ -12,15 +12,23 @@ export default function ResellerGlobalAdmin() {
      setTenants(stored);
   }, []);
 
-  const totalMRR = tenants.reduce((acc, t) => acc + (t.mrr || 0), 0);
+  const totalMRR = tenants.reduce((acc, t) => acc + ((t.status === 'Archived' ? 0 : t.mrr) || 0), 0);
 
-  const offboardTenant = (id: string, name: string) => {
-      const confirm = window.confirm(`DANGER: Are you sure you want to trigger the Zero-Knowledge Wipe and Offboard ${name}? This destroys all cryptographic keys permanently.`);
+  const archiveTenant = (id: string, name: string) => {
+      const confirm = window.confirm(`Archive ${name}? Billing will be paused and data locked for future revival.`);
       if (confirm) {
-          const updated = tenants.filter(t => t.id !== id);
+          const updated = tenants.map(t => t.id === id ? { ...t, status: 'Archived', mrr: 0 } : t);
           setTenants(updated);
           localStorage.setItem('vanguard_tenants', JSON.stringify(updated));
-          alert(`Success: Tenant ${name} has been structurally annihilated. Billing has ended.`);
+      }
+  }
+
+  const reviveTenant = (id: string, name: string) => {
+      const confirm = window.confirm(`Revive ${name}? Billing will resume immediately for the ${name} matrix.`);
+      if (confirm) {
+          const updated = tenants.map(t => t.id === id ? { ...t, status: 'Active', mrr: t.tier === 'PRO' ? 499 : t.tier === 'SOVEREIGN' ? 1999 : 0 } : t);
+          setTenants(updated);
+          localStorage.setItem('vanguard_tenants', JSON.stringify(updated));
       }
   }
 
@@ -70,16 +78,25 @@ export default function ResellerGlobalAdmin() {
                           <td className="p-4">{t.email}</td>
                           <td className="p-4"><span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs">{t.tier} (${t.mrr}/mo)</span></td>
                           <td className="p-4 flex items-center gap-2">
-                             <span className="w-2 h-2 rounded-full bg-matrixGreen content-pulse"></span>
+                             <span className={`w-2 h-2 rounded-full ${t.status === 'Archived' ? 'bg-red-500' : 'bg-matrixGreen content-pulse'}`}></span>
                              {t.status}
                           </td>
                           <td className="p-4 text-right flex justify-end gap-3">
-                              <a href="/loonyheads/dashboard" target="_blank" className="text-cyberBlue text-xs border border-cyberBlue/30 px-3 py-1 rounded hover:bg-cyberBlue hover:text-black transition inline-block">
-                                  Access Dashboard
-                              </a>
-                              <button onClick={() => offboardTenant(t.id, t.name)} className="text-red-500 text-xs border border-red-500/30 px-3 py-1 rounded hover:bg-red-500 hover:text-black transition">
-                                  Offboard
-                              </button>
+                              {t.status === 'Active' && (
+                                  <a href="/loonyheads/dashboard" target="_blank" className="text-cyberBlue text-xs border border-cyberBlue/30 px-3 py-1 rounded hover:bg-cyberBlue hover:text-black transition inline-block">
+                                      Access Dashboard
+                                  </a>
+                              )}
+                              
+                              {t.status === 'Archived' ? (
+                                  <button onClick={() => reviveTenant(t.id, t.name)} className="text-matrixGreen text-xs border border-matrixGreen/30 px-3 py-1 rounded hover:bg-matrixGreen hover:text-black transition">
+                                      Revive
+                                  </button>
+                              ) : (
+                                  <button onClick={() => archiveTenant(t.id, t.name)} className="text-red-500 text-xs border border-red-500/30 px-3 py-1 rounded hover:bg-red-500 hover:text-black transition">
+                                      Archive
+                                  </button>
+                              )}
                           </td>
                       </tr>
                   ))}
