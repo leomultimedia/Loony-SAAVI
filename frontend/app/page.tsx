@@ -1,81 +1,117 @@
-// e:\SAAVI\Repo\frontend\app\page.tsx
-import React from 'react';
+"use client";
 
-export default function GodModeDashboard() {
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+
+export default function Home() {
   return (
-    <main className="min-h-screen bg-background text-white font-sans p-8 selection:bg-cyberBlue selection:text-black">
-      {/* HEADER SECTION */}
-      <header className="flex justify-between items-center border-b border-white/10 pb-6 mb-10">
-        <div>
-          <h1 className="text-3xl font-display font-bold tracking-tight">Loony Heads <span className="text-cyberBlue">Vanguard</span></h1>
-          <p className="text-sm text-gray-400 mt-1 font-mono hover:text-matrixGreen transition-colors flex items-center">
-            <span className="w-2 h-2 bg-matrixGreen rounded-full animate-pulse mr-2"></span>
-            Zero-Knowledge Mode: ACTIVE
-          </p>
-        </div>
-        <div className="flex gap-4">
-          <button className="px-4 py-2 border border-white/20 rounded-lg hover:border-cyberBlue hover:bg-cyberBlue/10 transition backdrop-blur-md bg-glass-gradient ring-1 ring-white/10 font-mono text-sm">
-            System Logs
-          </button>
-          <button className="px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition">
-            Reseller Portal
-          </button>
-        </div>
-      </header>
-
-      {/* DASHBOARD GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* WIDGET 1: Continuous Shadow Audit */}
-        <section className="col-span-2 backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-cyberBlue/10 blur-3xl rounded-full group-hover:bg-cyberBlue/20 transition duration-700"></div>
-          <h2 className="text-xl font-bold mb-4 font-display flex items-center gap-2">
-            Continuous Shadow Audit
-            <span className="text-[10px] bg-matrixGreen/20 text-matrixGreen px-2 py-1 rounded font-mono uppercase tracking-wider border border-matrixGreen/50">Live</span>
-          </h2>
-          
-          <div className="space-y-4 font-mono text-sm">
-            <div className="flex justify-between items-center border-b border-white/5 pb-2">
-              <span className="text-gray-400">Target Tenant</span>
-              <span>Acme Corp L.L.C</span>
-            </div>
-            <div className="flex justify-between items-center border-b border-white/5 pb-2">
-              <span className="text-gray-400">Risk Heatmap</span>
-              <span className="text-red-400 flex items-center gap-2">
-                <div className="w-16 h-1 bg-red-900 rounded-full overflow-hidden">
-                  <div className="w-3/4 h-full bg-red-500"></div>
-                </div>
-                75% (CRITICAL)
-              </span>
-            </div>
-            <div className="flex justify-between items-center pb-2">
-              <span className="text-gray-400">Identified Gaps</span>
-              <span className="text-cyberBlue">ADHICS V2.0 (Missing MFA)</span>
-            </div>
+    <main className="min-h-screen bg-[#050505] text-white font-sans selection:bg-matrixGreen selection:text-black">
+      {/* Navigation */}
+      <nav className="flex justify-between items-center p-6 border-b border-white/10 backdrop-blur-md sticky top-0 z-50">
+          <div className="text-xl font-display font-bold flex items-center gap-2">
+            <div className="w-4 h-4 bg-matrixGreen rounded-full shadow-[0_0_15px_#00ff41]"></div>
+            Vanguard Omni-SaaS
           </div>
-        </section>
-
-        {/* WIDGET 2: Speculative Inference Pipeline */}
-        <section className="col-span-1 backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl p-6">
-          <h2 className="text-xl font-bold mb-4 font-display">Model Garden Router</h2>
-          
-          <div className="bg-black/50 rounded-lg p-4 font-mono text-xs text-gray-300">
-            <div className="flex items-center justify-between mb-2">
-              <span>Fast Track</span>
-              <span className="text-matrixGreen">Phi-3 (14B)</span>
-            </div>
-            <div className="flex items-center justify-between mb-2">
-              <span>Deep Analysis</span>
-              <span className="text-cyberBlue">Llama-3 (70B)</span>
-            </div>
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/10">
-              <span>Tokens Used:</span>
-              <span>0 (Local AI)</span>
-            </div>
+          <div className="flex gap-6 items-center font-mono text-sm">
+             <Link href="#pricing" className="hover:text-cyberBlue transition">Pricing</Link>
+             <Link href="/login" className="hover:text-cyberBlue transition">Sign In</Link>
+             <Link href="/onboarding" className="px-5 py-2 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition">
+                Deploy Now
+             </Link>
           </div>
-        </section>
+      </nav>
 
-      </div>
+      {/* Hero Section */}
+      <section className="py-32 px-6 text-center relative overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyberBlue/10 blur-[120px] rounded-full z-0 pointer-events-none"></div>
+          
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 max-w-4xl mx-auto">
+            <h1 className="text-5xl md:text-7xl font-display font-extrabold mb-6 tracking-tight leading-tight">
+                The Sovereign <br/>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyberBlue to-purple-500">
+                   Sales Infrastructure.
+                </span>
+            </h1>
+            <p className="text-xl text-gray-400 font-mono mb-10 max-w-2xl mx-auto">
+                No token costs. No data exfiltration. Build a world-class AI sales funnel mapped directly to your local hardware with military-grade encryption.
+            </p>
+            <div className="flex justify-center gap-4">
+                <Link href="/onboarding" className="px-8 py-4 bg-matrixGreen text-black font-bold rounded-lg hover:bg-[#00cc33] transition shadow-[0_0_20px_rgba(0,255,65,0.4)] text-lg">
+                   Start 14-Day Zero-Risk Trial
+                </Link>
+            </div>
+          </motion.div>
+      </section>
+
+      {/* The World's Best Subscription Plan */}
+      <section id="pricing" className="py-24 px-6 border-t border-white/5 relative z-10">
+          <div className="text-center mb-16">
+              <h2 className="text-3xl font-display font-bold">Unprecedented Control & Pricing</h2>
+              <p className="text-gray-500 font-mono mt-4">Metered solely on successful pipeline generated. Not AI tokens.</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              
+              {/* Core Tier */}
+              <div className="p-8 rounded-2xl border border-white/10 bg-white/[0.02] hover:border-cyberBlue/50 transition relative">
+                  <h3 className="text-2xl font-bold font-display mb-2">Vanguard Edge</h3>
+                  <p className="text-gray-400 text-sm h-12">For startups building locally.</p>
+                  <div className="my-6">
+                      <span className="text-5xl font-bold">$0</span>
+                      <span className="text-gray-500 font-mono">/mo</span>
+                  </div>
+                  <ul className="space-y-4 mb-8 text-sm font-mono text-gray-300">
+                      <li className="flex items-center gap-3">✓ Unlimited Local Inferences</li>
+                      <li className="flex items-center gap-3">✓ Community n8n Logic</li>
+                      <li className="flex items-center gap-3">✓ Bring Your Own Keys (BYOK)</li>
+                  </ul>
+                  <Link href="/onboarding?plan=edge" className="block w-full py-3 text-center border border-white/20 rounded-lg hover:bg-white/5 transition font-bold">
+                      Deploy Free
+                  </Link>
+              </div>
+
+              {/* The "World's Best" Tier */}
+              <div className="p-8 rounded-2xl border-2 border-matrixGreen bg-matrixGreen/[0.05] relative transform md:-translate-y-4 shadow-[0_0_40px_rgba(0,255,65,0.1)]">
+                  <div className="absolute top-0 right-8 -translate-y-1/2 bg-matrixGreen text-black px-4 py-1 text-xs font-bold rounded-full">
+                      THE WORLD'S BEST
+                  </div>
+                  <h3 className="text-2xl font-bold font-display mb-2">Omni-SaaS Pro</h3>
+                  <p className="text-gray-400 text-sm h-12">The ultimate revenue engine.</p>
+                  <div className="my-6">
+                      <span className="text-5xl font-bold">$499</span>
+                      <span className="text-gray-500 font-mono">/mo</span>
+                  </div>
+                  <ul className="space-y-4 mb-8 text-sm font-mono text-gray-300">
+                      <li className="flex items-center gap-3">✓ Zero-Knowledge Lead Vault</li>
+                      <li className="flex items-center gap-3">✓ Dark Scarcity Speculative AI</li>
+                      <li className="flex items-center gap-3">✓ Shadow Audit Engine (ISO/SSL)</li>
+                      <li className="flex items-center gap-3">✓ Interactive Voice (TTFT)</li>
+                  </ul>
+                  <Link href="/onboarding?plan=pro" className="block w-full py-3 text-center bg-matrixGreen text-black rounded-lg hover:bg-[#00cc33] transition font-bold">
+                      Launch Omni-Pro
+                  </Link>
+              </div>
+
+              {/* Enterprise Tier */}
+              <div className="p-8 rounded-2xl border border-white/10 bg-white/[0.02] hover:border-purple-500/50 transition">
+                  <h3 className="text-2xl font-bold font-display mb-2">Sovereign</h3>
+                  <p className="text-gray-400 text-sm h-12">Full white-labeling & GCC Compliance.</p>
+                  <div className="my-6">
+                      <span className="text-5xl font-bold">$1,999</span>
+                      <span className="text-gray-500 font-mono">/mo</span>
+                  </div>
+                  <ul className="space-y-4 mb-8 text-sm font-mono text-gray-300">
+                      <li className="flex items-center gap-3">✓ Dedicated Subdomains</li>
+                      <li className="flex items-center gap-3">✓ Local UAE Cloud Hosting</li>
+                      <li className="flex items-center gap-3">✓ SLA & Direct Support</li>
+                  </ul>
+                  <Link href="/onboarding?plan=sovereign" className="block w-full py-3 text-center border border-white/20 rounded-lg hover:bg-white/5 transition font-bold">
+                      Contact Sales
+                  </Link>
+              </div>
+
+          </div>
+      </section>
     </main>
   );
 }

@@ -28,6 +28,11 @@ model Tenant {
   wipedAt         DateTime? // GDPR Kill-Switch implementation
   leadsBilled     Int       @default(0) // Stripe metered billing usage
   
+  // Bring Your Own Keys (BYOK) dynamic handling
+  customApiKeys   Json?     
+  subscriptionTier String   @default("EDGE") // EDGE, PRO, SOVEREIGN
+  stripeCustomerId String?
+
   reseller        Reseller? @relation(fields: [resellerId], references: [id])
 }
 
