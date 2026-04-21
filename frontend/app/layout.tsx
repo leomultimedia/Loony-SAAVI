@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import localFont from "next/font/local";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export default function RootLayout({
@@ -31,7 +30,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" data-theme={theme} suppressHydrationWarning>
-      <body className={`${geistSans.variable} antialiased`} suppressHydrationWarning>
+      <body className={`${inter.variable} antialiased font-sans`} suppressHydrationWarning>
         {children}
 
         {/* Global Theme Toggle Widget */}
