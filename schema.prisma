@@ -25,6 +25,9 @@ model Tenant {
   botSessions     BotSession[]
   shadowAudits    ShadowAudit[]
 
+  wipedAt         DateTime? // GDPR Kill-Switch implementation
+  leadsBilled     Int       @default(0) // Stripe metered billing usage
+  
   reseller        Reseller? @relation(fields: [resellerId], references: [id])
 }
 
