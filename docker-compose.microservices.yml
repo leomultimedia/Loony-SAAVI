@@ -86,9 +86,19 @@ services:
   # The Local AI Brain
   ollama:
     image: ollama/ollama:latest
+    container_name: vanguard_ollama
+    environment:
+      - OLLAMA_FLASH_ATTENTION=1
+      - OLLAMA_KV_CACHE_TYPE=q8_0
+      - OLLAMA_KEEP_ALIVE=24h
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama/data:/root/.ollama
     deploy:
       resources:
          reservations:
            devices:
              - driver: nvidia
+               count: 1
                capabilities: [gpu]

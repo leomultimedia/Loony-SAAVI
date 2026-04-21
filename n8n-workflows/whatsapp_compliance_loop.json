@@ -1,0 +1,53 @@
+{
+  "name": "WhatsApp Compliance Loop Queue",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-webhook",
+        "options": {}
+      },
+      "name": "WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api.loonyheads.local/inference/chat",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "tenant_id",
+              "value": "={{$json[\"body\"][\"entry\"][0][\"id\"]}}"
+            },
+            {
+              "name": "message",
+              "value": "={{$json[\"body\"][\"entry\"][0][\"changes\"][0][\"value\"][\"messages\"][0][\"text\"][\"body\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send to Inference Engine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 300]
+    }
+  ],
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send to Inference Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
