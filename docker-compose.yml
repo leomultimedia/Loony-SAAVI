@@ -1,0 +1,40 @@
+version: '3.8'
+services:
+  # The AI Brain (Ollama for Zero-Cost Inference)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: vanguard_live_ollama
+    volumes: [./ollama:/root/.ollama]
+    ports: ["11434:11434"]
+    deploy:
+      resources:
+        reservations:
+          devices: [{driver: nvidia, count: 1, capabilities: [gpu]}]
+
+  # The Workflow Engine (n8n in Queue Mode)
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: vanguard_live_n8n
+    environment:
+      - N8N_ENCRYPTION_KEY=loony_heads_secure_vanguard
+      - WEBHOOK_URL=https://${YOUR_TUNNEL_URL} # Used for Cloudflare/Ngrok mappings
+      - EXECUTIONS_MODE=regular
+    ports: ["5678:5678"]
+    depends_on: [postgres, redis]
+    volumes:
+      - ./n8n/data:/home/node/.n8n
+
+  # The Secure Database (Multi-Tenant Isolated)
+  postgres:
+    image: postgres:16-alpine
+    container_name: vanguard_live_db
+    environment:
+      - POSTGRES_DB=loony_heads_vanguard
+      - POSTGRES_PASSWORD=cyber_secure_pass
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+
+  # Zero-Downtime Queue
+  redis:
+    image: redis:alpine
+    container_name: vanguard_live_redis

@@ -1,0 +1,59 @@
+{
+  "name": "Live Cyber-Sales Loop",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-live-webhook",
+        "options": {}
+      },
+      "name": "WhatsApp Lead Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "model": "llama3:70b-instruct",
+        "prompt": "You are the Loony Heads AI Auditor. Your goal is to assess if this lead needs an AI Management System (ISO 42001).\n\nUser: {{$json[\"body\"][\"message\"]}}\n\nRule 1: Ask 'Are you currently deploying Generative AI in your production?'\nRule 2: If the lead hesitates, deploy Speculative Persuasion: 'We've noticed a 40% increase in AI-related data breaches in the UAE this month. Shall we secure your stack today?'",
+        "options": {
+            "temperature": 0.4
+        }
+      },
+      "name": "Autonomous Consultant (Llama-3 Mini Audit)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.cal.com/v1/bookings",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "eventTypeId",
+              "value": "fast-track-audit"
+            },
+            {
+              "name": "attendee",
+              "value": "={{$node[\"WhatsApp Lead Intake\"].json[\"body\"][\"from\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "The Meeting Close (Cal.com API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [750, 300]
+    }
+  ],
+  "connections": {
+    "WhatsApp Lead Intake": {
+      "main": [[{"node": "Autonomous Consultant (Llama-3 Mini Audit)", "type": "main", "index": 0}]]
+    },
+    "Autonomous Consultant (Llama-3 Mini Audit)": {
+      "main": [[{"node": "The Meeting Close (Cal.com API)", "type": "main", "index": 0}]]
+    }
+  }
+}
