@@ -4,68 +4,119 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OmniCommandBar } from '../../../components/omni/OmniCommandBar';
 
-interface BackgroundTask {
+// Types for deep drill-down
+interface DrillDetail {
+    type: 'LEAD' | 'REVENUE' | 'TASK' | 'COMPLIANCE';
     id: string;
-    name: string;
-    progress: number;
-    status: 'Running' | 'Complete' | 'Failed';
-    type: 'AI_SIM' | 'SHADOW_AUDIT' | 'CRM_SYNC';
+    title: string;
+    data: any;
 }
 
 export default function CommandDashboard() {
-  const [tenants, setTenants] = useState<any[]>([]);
   const [currentEntity, setCurrentEntity] = useState<any>(null);
-  const [tasks, setTasks] = useState<BackgroundTask[]>([
-      { id: 'task_01', name: 'Stark Analysis: Lead #992', progress: 65, status: 'Running', type: 'AI_SIM' },
-      { id: 'task_02', name: 'Global DNS Shadow Audit', progress: 40, status: 'Running', type: 'SHADOW_AUDIT' },
-      { id: 'task_03', name: 'CRM Pipeline Handshake', progress: 100, status: 'Complete', type: 'CRM_SYNC' },
+  const [selectedDetail, setSelectedDetail] = useState<DrillDetail | null>(null);
+  const [tasks, setTasks] = useState([
+      { id: 'task_01', name: 'Stark Analysis: Lead #992', progress: 75, status: 'Running', details: 'Evaluating PII scrubbing hooks...' },
+      { id: 'task_02', name: 'Global DNS Shadow Audit', progress: 52, status: 'Running', details: 'Scanning DMARC/SPF for 42 domains' },
+      { id: 'task_03', name: 'CRM Pipeline Handshake', progress: 100, status: 'Complete', details: 'HubSpot Sync Successful' },
   ]);
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('vanguard_tenants') || '[]');
-    setTenants(stored);
     setCurrentEntity(stored[0] || { name: 'Lear Cyber tech', email: 'admin@lct.com', tier: 'PRO', status: 'Active' });
-
-    const interval = setInterval(() => {
-        setTasks(prev => prev.map(t => ({
-            ...t,
-            progress: t.progress < 100 ? t.progress + Math.floor(Math.random() * 5) : 100,
-            status: t.progress >= 99 ? 'Complete' : 'Running'
-        })));
-    }, 3000);
-    return () => clearInterval(interval);
   }, []);
 
-  const exportDataExcel = () => {
-      if (!currentEntity) return;
-      const csvData = "Lead ID,Lead Phone,Risk Score,ISO 27001 Gaps,Pipeline Status\nIDX-992,+971501234567,HIGH,Missing SSL/DMARC,Negotiating\nIDX-993,+44812345678,LOW,None,Closed";
-      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `Vanguard_Export_${currentEntity?.name?.replace(/\s+/g, '_') || 'Export'}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-  };
+  const leads = [
+      { id: '9924', name: 'Fortune 500 Prospect', match: 88, risk: 'SSL/DNS Gaps Detected', transcript: "User: We need ISO 27001... \nAI: I noticed your SSL expires in 48 hours..." },
+      { id: '9925', name: 'Government Entity', match: 92, risk: 'DMARC Failure', transcript: "User: Security is priority... \nAI: Your public DNS records are missing SPF..." },
+      { id: '9926', name: 'Fintech Startup', match: 74, risk: 'Zero-Knowledge Vault Issue', transcript: "User: How do you handle PII? \nAI: We redact everything locally..." }
+  ];
 
   return (
-    <main className="min-h-screen bg-transparent p-6 overflow-hidden flex flex-col relative selection:bg-red-500 selection:text-white transition-colors duration-1000">
+    <main className="min-h-screen bg-transparent p-6 overflow-hidden flex flex-col relative selection:bg-red-500 selection:text-white transition-all duration-1000">
        
-       {/* Cinematic Theme-Sensitive Overlays */}
-       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-           {/* Ironman Energy Rings */}
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-red-500/10 rounded-full animate-[spin_60s_linear_infinite] [mask-image:linear-gradient(to_bottom,transparent,black)]"></div>
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] border border-gold-500/5 border-dashed rounded-full animate-[spin_90s_linear_infinite_reverse]"></div>
-           
-           {/* Background Glows */}
-           <div className="absolute top-0 right-0 w-[40%] h-[40%] bg-[radial-gradient(circle_at_center,var(--accent-color)_0%,transparent_70%)] opacity-[0.08]"></div>
-           <div className="absolute bottom-0 left-0 w-[50%] h-[50%] bg-[radial-gradient(circle_at_center,#00f3ff10_0%,transparent_60%)] opacity-[0.05]"></div>
-       </div>
-
        <OmniCommandBar />
+
+       {/* GLOBAL DRILL-DOWN MODAL */}
+       <AnimatePresence>
+          {selectedDetail && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 bg-black/90 backdrop-blur-3xl overflow-y-auto">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 40 }}
+                    className="w-full max-w-5xl glass-panel iron-glow rounded-[3rem] p-12 relative overflow-hidden"
+                  >
+                        <button onClick={() => setSelectedDetail(null)} className="absolute top-8 right-8 w-12 h-12 rounded-full glass-panel flex items-center justify-center text-white hover:bg-red-500/20 transition">×</button>
+                        
+                        <div className="flex gap-4 items-center mb-8">
+                            <span className="bg-red-500 text-black px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest">{selectedDetail.type}</span>
+                            <h2 className="text-4xl font-black tracking-tighter uppercase">{selectedDetail.title}</h2>
+                        </div>
+
+                        {selectedDetail.type === 'LEAD' && (
+                            <div className="grid md:grid-cols-2 gap-12 font-mono">
+                                <div>
+                                    <h3 className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-[0.3em]">AI Ghost-Protocol Transcript</h3>
+                                    <div className="bg-black/50 border border-white/10 p-6 rounded-2xl h-[300px] overflow-y-auto text-xs leading-relaxed text-cyberBlue">
+                                        {selectedDetail.data.transcript}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-[0.3em]">Shadow Audit Findings</h3>
+                                    <div className="space-y-4">
+                                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                                            <p className="text-red-500 font-bold mb-1">DANGER: {selectedDetail.data.risk}</p>
+                                            <p className="text-[10px] text-gray-400">Status: Exposure detected. Sales hook prioritized.</p>
+                                        </div>
+                                        <div className="p-4 bg-matrixGreen/10 border border-matrixGreen/20 rounded-xl opacity-50">
+                                            <p className="text-matrixGreen font-bold mb-1">PASS: Local PII Redaction</p>
+                                            <p className="text-[10px] text-gray-400">All data Scrubbed via Ghost-Protocol Vault.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {selectedDetail.type === 'REVENUE' && (
+                            <div className="space-y-8 font-mono">
+                                <div className="grid grid-cols-3 gap-6">
+                                    <div className="p-6 glass-panel rounded-2xl">
+                                        <p className="text-[10px] text-gray-500 uppercase font-bold mb-2">Current MRR</p>
+                                        <p className="text-3xl font-black text-white">$142,800</p>
+                                    </div>
+                                    <div className="p-6 glass-panel rounded-2xl">
+                                        <p className="text-[10px] text-gray-500 uppercase font-bold mb-2">Churn Risk</p>
+                                        <p className="text-3xl font-black text-matrixGreen">0.4%</p>
+                                    </div>
+                                    <div className="p-6 glass-panel rounded-2xl">
+                                        <p className="text-[10px] text-gray-500 uppercase font-bold mb-2">Expansion</p>
+                                        <p className="text-3xl font-black text-red-500">+12%</p>
+                                    </div>
+                                </div>
+                                <div className="bg-black/40 border border-white/5 h-48 rounded-2xl flex items-center justify-center italic text-xs text-gray-600">
+                                    (Growth Chart Rendering via Speculative GPU Node...)
+                                </div>
+                            </div>
+                        )}
+
+                        {selectedDetail.type === 'TASK' && (
+                            <div className="space-y-6">
+                                <div className="p-8 bg-white/5 border border-white/10 rounded-3xl">
+                                    <p className="text-xs font-bold text-gray-500 mb-6 uppercase tracking-widest leading-relaxed">Operation Stream:</p>
+                                    <div className="space-y-3 font-mono text-[10px] text-cyberBlue">
+                                        <p>[09:21:04] Initializing Ollama:Llama-3-70b-v2</p>
+                                        <p>[09:21:08] Context Injection: Tenant_{currentEntity?.name}</p>
+                                        <p>[09:21:12] Performing Speculative Inference Path B</p>
+                                        <p className="animate-pulse">[09:22:01] {selectedDetail.data.details}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                  </motion.div>
+              </div>
+          )}
+       </AnimatePresence>
 
        {/* Navigation */}
        <nav className="flex justify-between items-center w-full max-w-7xl mx-auto mb-10 relative z-20">
@@ -75,18 +126,20 @@ export default function CommandDashboard() {
                         <span className="text-white font-black text-xs">V</span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-[10px] font-mono tracking-[0.4em] text-gray-500 hidden md:block">COMMAND_NODE</span>
+                        <span className="text-[10px] font-mono tracking-[0.4em] text-gray-500">BACK_TO_HQ</span>
                         <span className="text-xs font-bold uppercase hover:text-white transition">Admin Portal</span>
                     </div>
                 </div>
            </div>
-
            <div className="flex items-center gap-6">
-                <div className="hidden lg:flex flex-col items-end mr-4">
-                    <span className="text-[9px] font-mono text-gray-500 uppercase tracking-widest">Active Sovereign Link</span>
+                <div 
+                   onClick={() => setSelectedDetail({ type: 'REVENUE', id: 'global', title: 'Revenue Analytics', data: {} })}
+                   className="hidden md:flex flex-col items-end mr-4 cursor-pointer hover:opacity-80 transition"
+                >
+                    <span className="text-[9px] font-mono text-gray-500 uppercase tracking-widest">Sovereign Node Link</span>
                     <span className="text-sm font-bold text-white tracking-tight">{currentEntity?.name}</span>
                 </div>
-                <button onClick={exportDataExcel} className="px-6 py-2.5 glass-panel iron-glow rounded-xl hover:bg-white/5 text-[10px] font-black tracking-[0.2em] uppercase transition">
+                <button id="btn-export" className="px-6 py-2.5 glass-panel iron-glow rounded-xl hover:bg-white/5 text-[10px] font-black tracking-[0.2em] uppercase transition">
                     Export Data
                 </button>
            </div>
@@ -94,57 +147,39 @@ export default function CommandDashboard() {
 
        <div className="flex-1 max-w-7xl w-full mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10">
           
-          {/* Main Display: Extreme Glassmorphism */}
           <div className="md:col-span-8">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.98 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                className="glass-panel iron-glow rounded-[3rem] p-12 relative overflow-hidden group border-white/5"
-              >
-                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500/40 to-transparent"></div>
-                 
+              <motion.div className="glass-panel iron-glow rounded-[3rem] p-12 relative overflow-hidden group border-white/5 h-full">
                  <header className="flex justify-between items-start mb-12">
                     <div>
                         <h2 className="text-4xl font-display font-black text-white tracking-tighter uppercase leading-none mb-4">
-                            Sovereign HUD <span className="text-red-500">v4.0</span>
+                            Sovereign HUD <span className="text-red-500">v5.0</span>
                         </h2>
-                        <div className="flex gap-4">
-                            <span className="flex items-center gap-2 text-[9px] font-mono text-gray-500">
-                                <div className="w-1 h-1 bg-red-500 rounded-full shadow-[0_0_8px_red]"></div> ARC_CORE: READY
-                            </span>
-                            <span className="flex items-center gap-2 text-[9px] font-mono text-gray-500">
-                                <div className="w-1 h-1 bg-cyberBlue rounded-full shadow-[0_0_8px_#00f3ff]"></div> FRIDAY_LINK: ACTIVE
-                            </span>
-                        </div>
                     </div>
-                    <div className="bg-red-500/10 border border-red-500/30 px-4 py-2 rounded-lg">
-                        <span className="text-[10px] font-black text-red-500 uppercase tracking-[0.1em]">Security Protocol 14-B</span>
+                    <div 
+                      onClick={() => setSelectedDetail({ type: 'COMPLIANCE', id: 'overview', title: 'Compliance Matrix', data: {} })}
+                      className="bg-red-500/10 border border-red-500/30 px-4 py-2 rounded-lg cursor-pointer hover:bg-red-500 transition"
+                    >
+                        <span className="text-[10px] font-black text-red-500 uppercase tracking-[0.1em] group-hover:text-black">Zero-Exposure Audit Active</span>
                     </div>
                  </header>
 
                  <div className="grid grid-cols-1 gap-4">
-                    {[1, 2, 3].map((i) => (
+                    {leads.map((lead, i) => (
                        <motion.div 
-                          key={i} 
+                          key={lead.id} 
                           whileHover={{ x: 15, backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(239, 68, 68, 0.4)' }}
-                          className="flex items-center justify-between p-6 rounded-3xl border border-white/5 bg-white/[0.01] transition-all cursor-pointer group/item relative"
+                          onClick={() => setSelectedDetail({ type: 'LEAD', id: lead.id, title: `Audit: ${lead.name}`, data: lead })}
+                          className="flex items-center justify-between p-6 rounded-3xl border border-white/5 bg-white/[0.01] transition-all cursor-pointer group/item"
                        >
                           <div className="flex items-center gap-6">
-                            <div className="w-14 h-14 rounded-2xl glass-panel flex items-center justify-center relative overflow-hidden group-hover/item:border-red-500/50 transition">
-                                <div className="absolute inset-0 bg-red-500/10 animate-pulse"></div>
-                                <span className="font-mono text-white z-10 text-xl">#0{i}</span>
-                            </div>
+                            <div className="w-14 h-14 rounded-2xl glass-panel flex items-center justify-center font-mono text-white text-xl">#0{i+1}</div>
                             <div>
-                              <p className="font-black text-gray-400 group-hover/item:text-white transition tracking-tight text-lg">PROSPECT_MARK_{100 + i}</p>
-                              <div className="flex gap-4 mt-1 opacity-50">
-                                 <span className="text-[10px] font-mono uppercase">SSL_ENCRYPTED</span>
-                                 <span className="text-[10px] font-mono uppercase text-red-500">DMARC_FAILURE</span>
-                              </div>
+                              <p className="font-black text-gray-200 uppercase tracking-tight text-lg">{lead.name}</p>
+                              <p className="text-[10px] font-mono text-red-500 uppercase">{lead.risk}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                             <div className="text-3xl font-black text-white group-hover/item:text-red-500 transition tracking-tighter">9{i}%</div>
-                             <p className="text-[9px] font-mono text-gray-600 uppercase tracking-widest">Match Score</p>
+                             <div className="text-3xl font-black text-white group-hover/item:text-red-500 transition tracking-tighter">{lead.match}%</div>
                           </div>
                        </motion.div>
                     ))}
@@ -152,31 +187,31 @@ export default function CommandDashboard() {
               </motion.div>
           </div>
 
-          {/* Right Panels: Extreme Glass */}
-          <div className="md:col-span-4 space-y-8">
+          <div className="md:col-span-4 space-y-8 h-full">
              
-             {/* Iron Revenue Card */}
+             {/* Drill-down Revenue */}
              <motion.div 
                 whileHover={{ scale: 1.02 }}
-                className="glass-panel iron-glow rounded-[2.5rem] p-10 relative overflow-hidden border-t-red-500/50"
+                onClick={() => setSelectedDetail({ type: 'REVENUE', id: 'global', title: 'Revenue Breakdown', data: {} })}
+                className="glass-panel iron-glow rounded-[2.5rem] p-10 cursor-pointer border-t-red-500/50"
              >
-                <div className="absolute -top-12 -right-12 w-48 h-48 bg-red-500/10 blur-[60px] rounded-full"></div>
-                <h3 className="font-mono text-[10px] font-black uppercase tracking-[0.4em] opacity-40 mb-4">Core_Revenue_Target</h3>
+                <h3 className="font-mono text-[10px] font-black uppercase tracking-[0.4em] opacity-40 mb-4">Pipeline Velocity</h3>
                 <p className="text-6xl font-black tracking-tighter text-white mb-2">$1.42M</p>
-                <p className="text-[10px] font-mono text-gray-500 italic uppercase tracking-wider">Projected Yield 2026</p>
+                <p className="text-[10px] font-mono text-matrixGreen uppercase">Click to Drill-Down MRR &rarr;</p>
              </motion.div>
 
-             {/* Background Operations Widget */}
+             {/* Background Tasks Hub */}
              <div className="glass-panel iron-glow rounded-[2.5rem] p-8">
-                <h3 className="text-[10px] font-black text-gray-500 mb-8 uppercase tracking-[0.4em] flex items-center gap-3">
-                    <div className="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_red]"></div>
-                    BACKGROUND_THREADS
-                </h3>
+                <h3 className="text-[10px] font-black text-gray-500 mb-8 uppercase tracking-[0.4em]">Background_Threads</h3>
                 <div className="space-y-8">
                    {tasks.map(task => (
-                       <div key={task.id} className="space-y-3">
+                       <div 
+                         key={task.id} 
+                         className="space-y-2 cursor-pointer group"
+                         onClick={() => setSelectedDetail({ type: 'TASK', id: task.id, title: task.name, data: task })}
+                       >
                           <div className="flex justify-between items-center text-[9px] font-mono">
-                             <span className="font-bold text-gray-400 uppercase tracking-widest">{task.name}</span>
+                             <span className="font-bold text-gray-400 group-hover:text-white transition">{task.name}</span>
                              <span className="text-red-500">{task.progress}%</span>
                           </div>
                           <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
@@ -193,19 +228,6 @@ export default function CommandDashboard() {
 
           </div>
        </div>
-
-       {/* Iron Footer */}
-       <footer className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-            <div className="glass-panel iron-glow px-10 py-3 rounded-full pointer-events-auto border-t-red-500/40">
-                <div className="flex items-center gap-8 font-mono text-[10px] tracking-[0.2em] font-black uppercase">
-                    <span className="text-white flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span> ARC: STABLE
-                    </span>
-                    <span className="text-gray-500">Nodes: AE-102-DXB</span>
-                    <span className="text-red-500 underline decoration-red-500/50">Press ⌘ K to Command</span>
-                </div>
-            </div>
-       </footer>
 
     </main>
   );
