@@ -1,17 +1,23 @@
 "use client";
 import { motion } from 'framer-motion';
+import { OmniCommandBar } from '../../../components/omni/OmniCommandBar';
 
 export default function CommandDashboard() {
   return (
-    <main className="min-h-screen bg-[#050505] text-gray-100 font-sans p-6 overflow-hidden flex flex-col">
+    <main className="min-h-screen bg-[#050505] text-gray-100 font-sans p-6 overflow-hidden flex flex-col relative">
+       
+       {/* Global Cmd+K Palette */}
+       <OmniCommandBar />
+
        {/* OMNI-BAR / NO MENUS */}
        <header className="flex justify-center mb-8 pt-4 z-10 w-full relative">
            <div className="absolute inset-x-0 -top-10 h-32 bg-cyberBlue/5 blur-3xl rounded-full"></div>
-           <input 
-              type="text" 
-              placeholder="Omni-Bar: Ask questions, search leads, command audits..."
-              className="w-full max-w-3xl backdrop-blur-2xl bg-white/5 border border-white/10 rounded-full px-8 py-4 font-mono shadow-2xl focus:outline-none focus:ring-1 focus:ring-cyberBlue transition duration-300 z-20 placeholder:text-gray-600"
-           />
+           <div className="w-full max-w-3xl flex flex-col items-center">
+             <div className="w-full backdrop-blur-2xl bg-white/5 border border-white/10 rounded-full px-8 py-4 flex justify-between shadow-2xl z-20">
+               <span className="font-mono text-gray-500">Search leads, command audits...</span>
+               <span className="font-mono text-cyberBlue border border-cyberBlue/30 rounded px-2 text-sm bg-cyberBlue/10">Press ⌘ K</span>
+             </div>
+           </div>
        </header>
 
        {/* HEATMAP GRID */}

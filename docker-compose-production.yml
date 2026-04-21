@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # The Inference Engine
+  ollama:
+    image: ollama/ollama:latest
+    container_name: vanguard_prod_ollama
+    volumes: 
+      - ./ollama_storage:/root/.ollama
+    ports: 
+      - "11434:11434"
+    restart: always
+    environment:
+      - OLLAMA_FLASH_ATTENTION=1
+      - OLLAMA_KV_CACHE_TYPE=q8_0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Workflow Routing
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: vanguard_prod_n8n
+    command: /bin/sh -c "n8n worker & n8n webhook & n8n"
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_DATABASE=vanguard_n8n
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_USER=vanguard
+      - DB_POSTGRESDB_PASSWORD=cyber_secure_pass
+      - N8N_ENCRYPTION_KEY=loony_heads_secure_production
+      - WEBHOOK_URL=https://n8n.loonyheads.ae
+      - EXECUTIONS_MODE=queue
+      - QUEUE_BULL_REDIS_HOST=redis
+    ports: 
+      - "5678:5678"
+    depends_on: 
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  # Database with Zero-Knowledge Local Volumes
+  postgres:
+    image: postgres:16-alpine
+    container_name: vanguard_prod_db
+    environment:
+      - POSTGRES_DB=vanguard_n8n
+      - POSTGRES_USER=vanguard
+      - POSTGRES_PASSWORD=cyber_secure_pass
+    volumes:
+      - ./postgres_prod_data:/var/lib/postgresql/data
+    restart: always
+
+  # Event Mesh
+  redis:
+    image: redis:alpine
+    container_name: vanguard_prod_redis
+    command: redis-server --appendonly yes
+    restart: always
+
+  # Sentinel Gateway (Traefik for SSL and Subdomains)
+  traefik:
+    image: traefik:v2.10
+    container_name: vanguard_prod_gateway
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
